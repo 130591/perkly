@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
-import { DefaultTypeOrmRepository } from '../typeorm'
+import { DefaultTypeOrmRepository } from '../core/typeorm'
 import { WalletEntity } from '../entities/wallet.entity'
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Entity } from 'typeorm'
-import { DefaultEntity } from '../base.entity'
+import { DefaultEntity } from '../core/base.entity'
 
 /**
  * `batch` table used by the bulk-import flow (`Repository.createBatch`).

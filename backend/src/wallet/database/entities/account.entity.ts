@@ -1,5 +1,5 @@
 import { Entity } from 'typeorm'
-import { DefaultEntity } from '../base.entity'
+import { DefaultEntity } from '../core/base.entity'
 
 /**
  * `accounts` table. The only columns the wallet flow needs are the ones

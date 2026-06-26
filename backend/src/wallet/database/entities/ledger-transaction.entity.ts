@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany } from 'typeorm'
-import { DefaultEntity } from '../base.entity'
+import { DefaultEntity } from '../core/base.entity'
 import { TransactionProps } from '../../domain/ledger'
 import { LedgerEntryEntity } from './ledger-entry.entity'
 

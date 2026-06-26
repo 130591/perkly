@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm'
-import { DefaultEntity } from '../base.entity'
+import { DefaultEntity } from '../core/base.entity'
 import { Account } from '../../domain/ledger'
 import { LedgerTransactionEntity } from './ledger-transaction.entity'
 

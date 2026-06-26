@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource, EntityManager } from 'typeorm'
-import { DefaultTypeOrmRepository } from '../typeorm'
+import { DefaultTypeOrmRepository } from '../core/typeorm'
 import { Account, Ledger, Transaction, TransactionProps } from '../../domain/ledger'
 import { WalletEntity } from '../entities/wallet.entity'
 import { LedgerTransactionEntity } from '../entities/ledger-transaction.entity'
