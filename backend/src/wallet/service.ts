@@ -1,0 +1,55 @@
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { Transactional } from 'typeorm-transactional'
+import { WalletRepository } from './database/repositories/wallet.repository'
+import { ChargeRepository } from './database/repositories/charge.repository'
+import { LedgerRepository } from './database/repositories/ledger.repository'
+import { Psp } from './psp'
+import { Config } from './config'
+
+type ChargeDto = {
+  method: 'pix' | 'boleto',
+  amount: bigint,
+  accountId: string,
+  idempotencyKey: string
+}
+
+@Injectable()
+export class Wallet {
+  constructor(
+    private readonly walletRepo: WalletRepository,
+    private readonly chargeRepo: ChargeRepository,
+    private readonly ledgerRepo: LedgerRepository,
+    private readonly psp: Psp,
+    private readonly config: Config,
+  ) {}
+
+  async addBalance(input: ChargeDto) {
+    const wallet = await this.walletRepo.findByAccountId(input.accountId)
+    if (!wallet) throw new NotFoundException('Client Wallet not found')
+    const charge = await this.psp.charge(input.amount, input.method)
+    await this.chargeRepo.create({
+      walletId: wallet.id,
+      method: input.method,
+      idempotencyKey: input.idempotencyKey,
+      charge,
+    })
+    return charge
+  }
+
+  @Transactional()
+  async confirmBalance(pspChargeId: string) {
+    const charge = await this.chargeRepo.findByPspChargeId(pspChargeId)
+    if (!charge) throw new NotFoundException('Charge not found')
+    if (charge.status === 'PAID') return // idempotent: already settled
+
+    const accountId = await this.walletRepo.findAccountId(charge.walletId)
+    if (!accountId) throw new NotFoundException('Wallet account not found')
+
+    const ledger = await this.ledgerRepo.findEntries(accountId)
+    const transaction = ledger.fund(BigInt(charge.amountCents))
+
+    const transactionId = await this.ledgerRepo.append(charge.walletId, transaction)
+    await this.chargeRepo.markPaid(charge.id, transactionId)
+    await this.walletRepo.applyCredit(charge.walletId, charge.amountCents)
+  }
+}
