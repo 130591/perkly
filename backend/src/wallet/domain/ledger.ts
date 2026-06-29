@@ -1,16 +1,18 @@
-
 export type Account = 'external' | 'available' | 'reserved' | 'revenue'
-
+const ACCOUNTS = ['external', 'available', 'reserved', 'revenue'] as const
+    
 export type Entry = {
   account: Account,
   value: bigint
 }
 
+export type Snapshot = Partial<Record<Account, bigint>>
+
 export type TransactionProps = {
   id: string,
   entries: Entry[]
   timestamp: Date,
-  type: 'fund' | 'reserve' | 'payout' | 'expire',
+  type: 'fund' | 'reserve' | 'settle' | 'expire',
 }
 
 export class Transaction {
@@ -35,7 +37,7 @@ export class Transaction {
 }
 
 export class Ledger {
-  private journal: Transaction[] = []
+  private balances = new Map<Account, bigint>()
 
   private assertSufficientFunds(tx: Transaction): void {
     const delta = tx.props.entries
@@ -47,24 +49,25 @@ export class Ledger {
     }
   }
 
-  post(transaction: TransactionProps): Transaction {
+  private post(transaction: TransactionProps): Transaction {
     const tx = Transaction.create(transaction)
     this.assertSufficientFunds(tx)
-    this.journal.push(tx)
+    for (const entry of tx.props.entries) {
+      const current = this.balances.get(entry.account) ?? 0n
+      this.balances.set(entry.account, current + entry.value)
+    }
     return tx
   }
 
   balanceOf(account: Account) {
-    return this.journal
-      .flatMap(tx => tx.props.entries)
-      .filter(e => e.account === account)
-      .reduce((sum, e) => sum + e.value, 0n)
+    return this.balances.get(account) ?? 0n
   }
     
-  static hydrate(transactions: TransactionProps[]): Ledger {
+  static hydrate(snapshot: Snapshot): Ledger {
     const ledger = new Ledger()
-    for (const props of transactions) {
-      ledger.journal.push(Transaction.create(props))
+    for (const account of ACCOUNTS) {
+      const balance = snapshot[account]
+      if (balance !== undefined) ledger.balances.set(account, balance)
     }
     return ledger
   }
@@ -83,13 +86,38 @@ export class Ledger {
     
   reserve(amount: bigint, at: Date = new Date): Transaction {
     return this.post({
-      id: crypto.randomUUID(), 
-      timestamp: at, 
-      type: 'reserve', 
+      id: crypto.randomUUID(),
+      timestamp: at,
+      type: 'reserve',
       entries: [
         { account: 'available', value: -amount },
         { account: 'reserved', value: amount }
-      ] 
+      ]
+    })
+  }
+
+  settle(amount: bigint, fee: bigint, at: Date = new Date): Transaction {
+    return this.post({
+      id: crypto.randomUUID(),
+      timestamp: at,
+      type: 'settle',
+      entries: [
+        { account: 'reserved', value: -(amount + fee) },
+        { account: 'external', value: amount },
+        { account: 'revenue', value: fee }
+      ]
+    })
+  }
+
+  expire(amount: bigint, at: Date = new Date): Transaction {
+    return this.post({
+      id: crypto.randomUUID(),
+      timestamp: at,
+      type: 'expire',
+      entries: [
+        { account: 'reserved', value: -amount },
+        { account: 'available', value: amount }
+      ]
     })
   }
 }
