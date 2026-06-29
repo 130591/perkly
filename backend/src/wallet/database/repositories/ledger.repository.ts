@@ -1,11 +1,18 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
-import { DataSource, EntityManager } from 'typeorm'
+import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../core/typeorm'
-import { Account, Ledger, Transaction, TransactionProps } from '../../domain/ledger'
-import { WalletEntity } from '../entities/wallet.entity'
+import { Account, Snapshot, Transaction } from '../../domain/ledger'
 import { LedgerTransactionEntity } from '../entities/ledger-transaction.entity'
 import { LedgerEntryEntity } from '../entities/ledger-entry.entity'
+
+/** Loaded once at module init; see database/sql/account-balances.sql. */
+const ACCOUNT_BALANCES_SQL = readFileSync(
+  join(__dirname, '..', 'sql', 'account-balances.sql'),
+  'utf8',
+)
 
 @Injectable()
 export class LedgerRepository extends DefaultTypeOrmRepository<LedgerTransactionEntity> {
@@ -13,29 +20,21 @@ export class LedgerRepository extends DefaultTypeOrmRepository<LedgerTransaction
     super(LedgerTransactionEntity, dataSource.manager)
   }
 
-  async findEntries(accountId: string): Promise<Ledger> {
-    const rows = await ledgerEntriesByTransaction(this.manager, accountId)
-    const byTransaction = new Map<string, TransactionProps>()
+  /**
+   * Per-account ledger balances for `accountId`, aggregated in SQL (one row
+   * per account, not the full journal). Feed straight into `Ledger.hydrate`.
+   */
+  async loadBalances(accountId: string): Promise<Snapshot> {
+    const rows: AccountBalanceRow[] = await this.manager.query(
+      ACCOUNT_BALANCES_SQL,
+      [accountId],
+    )
 
+    const snapshot: Snapshot = {}
     for (const row of rows) {
-      let transaction = byTransaction.get(row.transaction_id)
-      if (!transaction) {
-        transaction = {
-          id: row.transaction_id,
-          type: row.type,
-          timestamp: row.timestamp,
-          entries: [],
-        }
-        byTransaction.set(row.transaction_id, transaction)
-      }
-
-      transaction.entries.push({
-        account: row.account as Account,
-        value: BigInt(row.amount),
-      })
+      snapshot[row.account] = BigInt(row.balance)
     }
-
-    return Ledger.hydrate([...byTransaction.values()])
+    return snapshot
   }
 
   /** Persists a domain transaction (with its entries) and returns its DB id. */
@@ -63,30 +62,7 @@ export class LedgerRepository extends DefaultTypeOrmRepository<LedgerTransaction
   }
 }
 
-type LedgerEntryRow = {
-  transaction_id: string
-  type: TransactionProps['type']
-  timestamp: Date
+type AccountBalanceRow = {
   account: Account
-  amount: string
-}
-
-function ledgerEntriesByTransaction(
-  manager: EntityManager,
-  accountId: string,
-): Promise<LedgerEntryRow[]> {
-  return manager
-    .createQueryBuilder(LedgerEntryEntity, 'e')
-    .innerJoin('e.transaction', 't')
-    .innerJoin(WalletEntity, 'w', 'w.id = t.wallet_id')
-    .innerJoin('w.account', 'a')
-    .where('a.external_id = :accountId', { accountId })
-    .orderBy('t.created_at', 'ASC')
-    .addOrderBy('t.id', 'ASC')
-    .select('t.external_id', 'transaction_id')
-    .addSelect('t.type', 'type')
-    .addSelect('t.created_at', 'timestamp')
-    .addSelect('e.account', 'account')
-    .addSelect('e.amount', 'amount')
-    .getRawMany<LedgerEntryRow>()
+  balance: string
 }

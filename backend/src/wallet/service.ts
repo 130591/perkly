@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Transactional } from 'typeorm-transactional'
-import { WalletRepository } from './database/repositories/wallet.repository'
-import { ChargeRepository } from './database/repositories/charge.repository'
-import { LedgerRepository } from './database/repositories/ledger.repository'
-import { Psp } from './psp'
+import { WalletRepository } from './database/repositories'
+import { ChargeRepository } from './database/repositories'
+import { LedgerRepository } from './database/repositories'
+import { Psp } from '../settle/psp'
 import { Config } from './config'
+import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
   method: 'pix' | 'boleto',
@@ -45,7 +46,7 @@ export class Wallet {
     const accountId = await this.walletRepo.findAccountId(charge.walletId)
     if (!accountId) throw new NotFoundException('Wallet account not found')
 
-    const ledger = await this.ledgerRepo.findEntries(accountId)
+    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(accountId))
     const transaction = ledger.fund(BigInt(charge.amountCents))
 
     const transactionId = await this.ledgerRepo.append(charge.walletId, transaction)
