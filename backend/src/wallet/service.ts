@@ -36,6 +36,21 @@ export class Wallet {
     })
     return charge
   }
+        
+  async findBalances(accountId: string) {
+    const wallet = await this.walletRepo.findByAccountId(accountId)
+    if (!wallet) throw new NotFoundException('Wallet not found')
+    const balance = await this.ledgerRepo.loadBalances(accountId)
+    const available = balance.available ?? 0n
+    const reserved = balance.reserved ?? 0n
+    const total = available + reserved
+    
+    return {
+      available:available.toString(),
+      reserved: reserved.toString(),
+      total: total.toString()
+    }
+  }
 
   @Transactional()
   async confirmBalance(pspChargeId: string) {

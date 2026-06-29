@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common'
 import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
 import { Wallet } from './service'
 
@@ -50,5 +50,14 @@ export class WalletController {
       pixQrCode: charge.pix_qr_code,
       expiresAt: charge.expires_at,
     }
+  }
+
+  /**
+   * Read-model with the customer's wallet balances (available, reserved, total).
+   * Ledger is the source of truth; amounts are cents-as-strings to survive JSON.
+   */
+  @Get(':accountId/balances')
+  async getBalances(@Param('accountId', ParseUUIDPipe) accountId: string) {
+    return this.wallet.findBalances(accountId)
   }
 }
