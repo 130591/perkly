@@ -3,18 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../core/typeorm'
 import { ChargeEntity } from '../entities/charge.entity'
-
-/**
- * Shape returned by the PSP charge call. Defined here because the `psp`
- * module does not exist yet; move it to `./psp` once it lands.
- */
-export type Charge = {
-  id: string
-  amount: bigint
-  status: string
-  pix_qr_code: string | null
-  expires_at: Date | null
-}
+import { Charge } from '../../../settle/psp'
 
 @Injectable()
 export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
