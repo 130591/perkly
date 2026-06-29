@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { Wallet } from './service'
 import { Config } from './config'
 import { SettleModule } from '../settle/settle.module'
+import { WalletController } from './wallet.controller'
 import {
   ChargeRepository,
   LedgerRepository,
@@ -10,7 +11,7 @@ import {
 
 @Module({
   imports: [SettleModule],
-  controllers: [],
+  controllers: [WalletController],
   providers: [
     Wallet,
     Config,
@@ -18,6 +19,6 @@ import {
     ChargeRepository,
     LedgerRepository,
   ],
-  exports: [Wallet],
+  exports: [],
 })
 export class WalletModule {}

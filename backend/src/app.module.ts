@@ -18,7 +18,6 @@ import { WalletModule } from './wallet/wallet.module'
         // Off by default; integration tests flip it on against a throwaway DB.
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
       }),
-      // Wrap the DataSource so @Transactional() can hook into it.
       dataSourceFactory: async (options) => {
         if (!options) throw new Error('Invalid TypeORM options')
         return addTransactionalDataSource(new DataSource(options))
