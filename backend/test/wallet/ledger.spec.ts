@@ -1,4 +1,4 @@
-import { Ledger, Transaction } from '../src/wallet/domain/ledger'
+import { Ledger, Transaction } from '../../src/wallet/domain/ledger'
 
 describe('Ledger — timeline da campanha (tabela completa)', () => {
     // helper: soma de TODAS as contas tem que ser sempre 0 (mundo fechado)
