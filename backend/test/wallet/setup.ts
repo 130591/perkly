@@ -1,3 +1,4 @@
+import { Server } from 'node:http'
 import { INestApplication, ValidationPipe } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { DataSource } from 'typeorm'
@@ -53,8 +54,8 @@ export function useIntegrationApp(): IntegrationContext {
 
     ctx.app = app
     ctx.ds = moduleRef.get(DataSource)
-    ctx.get = app.get.bind(app)
-    ctx.http = () => app.getHttpServer()
+    ctx.get = app.get.bind(app) as INestApplication['get']
+    ctx.http = () => app.getHttpServer() as Server
   }, 120_000)
 
   // Container é um só para o describe inteiro; zera as tabelas entre os testes

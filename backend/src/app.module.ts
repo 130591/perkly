@@ -18,9 +18,9 @@ import { WalletModule } from './wallet/wallet.module'
         // Off by default; integration tests flip it on against a throwaway DB.
         synchronize: process.env.DB_SYNCHRONIZE === 'true',
       }),
-      dataSourceFactory: async (options) => {
+      dataSourceFactory: (options) => {
         if (!options) throw new Error('Invalid TypeORM options')
-        return addTransactionalDataSource(new DataSource(options))
+        return Promise.resolve(addTransactionalDataSource(new DataSource(options)))
       },
     }),
     WalletModule,
