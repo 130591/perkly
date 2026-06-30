@@ -29,8 +29,4 @@ export class WalletRepository extends DefaultTypeOrmRepository<WalletEntity> {
   applyCredit(id: number, amountCents: string): Promise<unknown> {
     return this.update(id, { balance: () => `balance + ${amountCents}` })
   }
-
-  protected toDomain(row: any): WalletEntity {
-    return new WalletEntity(row)
-  }
 }

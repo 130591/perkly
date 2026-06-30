@@ -56,10 +56,6 @@ export class LedgerRepository extends DefaultTypeOrmRepository<LedgerTransaction
     )
     return saved.id
   }
-
-  protected toDomain(row: any): LedgerTransactionEntity {
-    return new LedgerTransactionEntity(row)
-  }
 }
 
 type AccountBalanceRow = {

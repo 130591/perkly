@@ -38,8 +38,4 @@ export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
   markPaid(id: number, transactionId: number): Promise<unknown> {
     return this.update(id, { status: 'PAID', transactionId })
   }
-
-  protected toDomain(row: any): ChargeEntity {
-    return new ChargeEntity(row)
-  }
 }

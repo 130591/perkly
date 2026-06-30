@@ -30,14 +30,14 @@ export abstract class DefaultTypeOrmRepository<T extends DefaultEntity<T>> {
 
   async findOneById(externalId: string, relations?: string[]): Promise<T | null> {
     return this.repository.findOne({
-      where: { externalId } as any,
+      where: { externalId } as FindOptionsWhere<T>,
       relations,
     })
   }
 
   async findOneByPk(id: number): Promise<T | null> {
     return this.repository.findOne({
-      where: { id } as any,
+      where: { id } as FindOptionsWhere<T>,
     })
   }
 
@@ -51,7 +51,7 @@ export abstract class DefaultTypeOrmRepository<T extends DefaultEntity<T>> {
 
   async exists(externalId: string): Promise<boolean> {
     return this.repository.exists({
-      where: { externalId } as any,
+      where: { externalId } as FindOptionsWhere<T>,
     })
   }
 
@@ -60,6 +60,4 @@ export abstract class DefaultTypeOrmRepository<T extends DefaultEntity<T>> {
       where: properties,
     })
   }
-
-  protected abstract toDomain(row: any): unknown
 }
