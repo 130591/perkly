@@ -59,6 +59,18 @@ export class Ledger {
     return tx
   }
 
+  summary() {
+    const available = this.balanceOf('available') ?? 0n
+    const reserved =  this.balanceOf('reserved') ?? 0n
+    const total = available + reserved
+
+    return {
+      available:available.toString(),
+      reserved: reserved.toString(),
+      total: total.toString()
+    }
+  }
+
   balanceOf(account: Account) {
     return this.balances.get(account) ?? 0n
   }
@@ -72,52 +84,40 @@ export class Ledger {
     return ledger
   }
     
-  fund(amount: bigint, at: Date = new Date): Transaction {
-    return this.post({
-      id: crypto.randomUUID(), 
-      timestamp: at, 
-      type: 'fund', 
-      entries: [
-        { account: 'external', value: -amount },
-        { account: 'available', value: amount }
-      ]
-    })
-  }
-    
-  reserve(amount: bigint, at: Date = new Date): Transaction {
-    return this.post({
-      id: crypto.randomUUID(),
-      timestamp: at,
-      type: 'reserve',
-      entries: [
-        { account: 'available', value: -amount },
-        { account: 'reserved', value: amount }
-      ]
-    })
+  private record(
+    type: TransactionProps['type'],
+    entries: Entry[],
+    at: Date,
+  ): Transaction {
+    return this.post({ id: crypto.randomUUID(), timestamp: at, type, entries })
   }
 
-  settle(amount: bigint, fee: bigint, at: Date = new Date): Transaction {
-    return this.post({
-      id: crypto.randomUUID(),
-      timestamp: at,
-      type: 'settle',
-      entries: [
-        { account: 'reserved', value: -(amount + fee) },
-        { account: 'external', value: amount },
-        { account: 'revenue', value: fee }
-      ]
-    })
+  fund(amount: bigint, at: Date = new Date()): Transaction {
+    return this.record('fund', [
+      { account: 'external', value: -amount },
+      { account: 'available', value: amount }
+    ], at)
   }
 
-  expire(amount: bigint, at: Date = new Date): Transaction {
-    return this.post({
-      id: crypto.randomUUID(),
-      timestamp: at,
-      type: 'expire',
-      entries: [
-        { account: 'reserved', value: -amount },
-        { account: 'available', value: amount }
-      ]
-    })
+  reserve(amount: bigint, at: Date = new Date()): Transaction {
+    return this.record('reserve', [
+      { account: 'available', value: -amount },
+      { account: 'reserved', value: amount }
+    ], at)
+  }
+
+  settle(amount: bigint, fee: bigint, at: Date = new Date()): Transaction {
+    return this.record('settle', [
+      { account: 'reserved', value: -(amount + fee) },
+      { account: 'external', value: amount },
+      { account: 'revenue', value: fee }
+    ], at)
+  }
+
+  expire(amount: bigint, at: Date = new Date()): Transaction {
+    return this.record('expire', [
+      { account: 'reserved', value: -amount },
+      { account: 'available', value: amount }
+    ], at)
   }
 }
