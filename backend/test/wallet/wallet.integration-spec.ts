@@ -13,14 +13,14 @@ describe('Wallet', () => {
     // seed: uma conta com carteira zerada
     const { account, wallet: seeded } = await seedWallet(ctx.ds)
 
-    // cobrança (mock PSP devolve charge id '123') + confirmação
-    await wallet.addBalance({
+    // cobrança + confirmação usando o id que o PSP devolveu
+    const charge = await wallet.addBalance({
       method: 'pix',
       amount: 20000n,
       accountId: account.externalId,
       idempotencyKey: 'k1',
     })
-    await wallet.confirmBalance('123')
+    await wallet.confirmBalance(charge.id)
 
     // o razão refletiu o funding
     const balances = await ledgerRepo.loadBalances(account.externalId)
@@ -39,13 +39,13 @@ describe('Wallet', () => {
     const { account } = await seedWallet(ctx.ds)
 
     // funda só para ter um número conhecido; o foco aqui é a leitura, não o funding
-    await wallet.addBalance({
+    const charge = await wallet.addBalance({
       method: 'pix',
       amount: 1000n,
       accountId: account.externalId,
       idempotencyKey: 'k1',
     })
-    await wallet.confirmBalance('123')
+    await wallet.confirmBalance(charge.id)
 
     const balance = await wallet.findBalances(account.externalId)
 

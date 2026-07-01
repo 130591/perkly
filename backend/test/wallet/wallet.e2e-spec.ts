@@ -10,15 +10,15 @@ describe('Wallet (e2e)', () => {
 
     const res = await e2e
       .request()
-      .post(`/wallets/${account.externalId}/charges`)
+      .post(`/wallet/${account.externalId}/charge`)
       .send({ method: 'pix', amount: '20000', idempotencyKey: 'k1' })
       .expect(201)
 
     expect(res.body).toEqual({
-      id: '123',
-      status: 'PENDING',
+      id: expect.any(String),
+      status: 'pending',
       amount: '20000',
-      pixQrCode: 'kdmomokdmskomsdkmosmdkmosmdk',
+      pixQrCode: expect.any(String),
       expiresAt: expect.any(String),
     })
   })
@@ -26,7 +26,7 @@ describe('Wallet (e2e)', () => {
   it('deve retornar um erro 404 (Wallet not found)', async () => {
     const res = await e2e
     .request()
-    .get(`/wallets/${randomUUID()}/balances`)
+    .get(`/wallet/${randomUUID()}/balance`)
     .expect(404)
      expect(res.body.message).toBe('Wallet not found')
   })
