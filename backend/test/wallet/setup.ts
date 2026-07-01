@@ -38,6 +38,9 @@ export function useIntegrationApp(): IntegrationContext {
     process.env.DB_PASSWORD = container.getPassword()
     process.env.DB_NAME = container.getDatabase()
     process.env.DB_SYNCHRONIZE = 'true'
+    // AppModule boota o ConfigModule; sem isto o sharedConfigFactory rejeita o
+    // boot (identity é obrigatório) em ambientes sem .env, como CI.
+    process.env.COMPANY_IDENTITY ??= '00000000000000'
 
     // Precisa rodar antes do DataSource existir para o @Transactional() enganchar.
     initializeTransactionalContext()

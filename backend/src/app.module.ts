@@ -2,22 +2,29 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { addTransactionalDataSource } from 'typeorm-transactional'
+import { ConfigModule } from './wallet/config/config.module'
+import { ConfigService } from './wallet/config/service'
 import { WalletModule } from './wallet/wallet.module'
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forRootAsync({
-      useFactory: () => ({
-        type: 'postgres',
-        host: process.env.DB_HOST ?? 'localhost',
-        port: Number(process.env.DB_PORT ?? 5432),
-        username: process.env.DB_USER ?? 'postgres',
-        password: process.env.DB_PASSWORD ?? 'postgres',
-        database: process.env.DB_NAME ?? 'perkly',
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        // Off by default; integration tests flip it on against a throwaway DB.
-        synchronize: process.env.DB_SYNCHRONIZE === 'true',
-      }),
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const db = config.get('database')
+        return {
+          type: 'postgres',
+          host: db.host,
+          port: db.port,
+          username: db.user,
+          password: db.password,
+          database: db.name,
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          // Off by default; integration tests flip it on against a throwaway DB.
+          synchronize: db.synchronize,
+        }
+      },
       dataSourceFactory: (options) => {
         if (!options) throw new Error('Invalid TypeORM options')
         return Promise.resolve(addTransactionalDataSource(new DataSource(options)))
