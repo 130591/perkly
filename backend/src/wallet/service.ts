@@ -1,10 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { Transactional } from 'typeorm-transactional'
-import { WalletRepository } from './database/repositories'
-import { ChargeRepository } from './database/repositories'
-import { LedgerRepository } from './database/repositories'
-import { Psp } from '../settle/psp'
-import { Config } from './config'
+import { WalletRepository, ChargeRepository, LedgerRepository } from './database'
+import { PaymentRail, PAYMENT_RAIL } from '../settle/payment-rail'
 import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
@@ -20,14 +17,17 @@ export class Wallet {
     private readonly walletRepo: WalletRepository,
     private readonly chargeRepo: ChargeRepository,
     private readonly ledgerRepo: LedgerRepository,
-    private readonly psp: Psp,
-    private readonly config: Config,
+    @Inject(PAYMENT_RAIL) private readonly rail: PaymentRail,
   ) {}
 
   async addBalance(input: ChargeDto) {
     const wallet = await this.walletRepo.findByAccountId(input.accountId)
     if (!wallet) throw new NotFoundException('Client Wallet not found')
-    const charge = await this.psp.charge(input.amount, input.method)
+    const charge = await this.rail.charge({
+      amountCents: input.amount,
+      method: input.method,
+      reference: input.idempotencyKey,
+    })
     await this.chargeRepo.create({
       walletId: wallet.id,
       method: input.method,
@@ -36,7 +36,7 @@ export class Wallet {
     })
     return charge
   }
-        
+ 
   async findBalances(accountId: string) {
     const wallet = await this.walletRepo.findByAccountId(accountId)
     if (!wallet) throw new NotFoundException('Wallet not found')

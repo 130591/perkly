@@ -3,7 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../core/typeorm'
 import { ChargeEntity } from '../entities/charge.entity'
-import { Charge } from '../../../settle/psp'
+import { Charge } from '../../../settle/payment-rail'
 
 @Injectable()
 export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
@@ -21,16 +21,17 @@ export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
     idempotencyKey: string
     charge: Charge
   }): Promise<ChargeEntity> {
+    const { charge } = input
     return this.save(
       new ChargeEntity({
         walletId: input.walletId,
         method: input.method,
         idempotencyKey: input.idempotencyKey,
-        pspChargeId: input.charge.id,
-        amountCents: input.charge.amount.toString(),
-        status: input.charge.status,
-        pixQrCode: input.charge.pix_qr_code,
-        expiresAt: input.charge.expires_at,
+        pspChargeId: charge.id,
+        amountCents: charge.amountCents.toString(),
+        status: charge.status,
+        pixQrCode: charge.method === 'pix' ? charge.pixQrCode : null,
+        expiresAt: charge.expiresAt,
       }),
     )
   }

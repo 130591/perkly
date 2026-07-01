@@ -20,7 +20,7 @@ class CreateChargeBody {
   idempotencyKey: string
 }
 
-@Controller('wallets')
+@Controller('wallet')
 export class WalletController {
   constructor(private readonly wallet: Wallet) {}
 
@@ -31,7 +31,7 @@ export class WalletController {
    * Settlement is NOT handled here — `confirmBalance` runs as an async job once
    * the PSP notifies payment, so it is intentionally not exposed as an endpoint.
    */
-  @Post(':accountId/charges')
+  @Post(':accountId/charge')
   async createCharge(
     @Param('accountId', ParseUUIDPipe) accountId: string,
     @Body() body: CreateChargeBody,
@@ -43,12 +43,17 @@ export class WalletController {
       idempotencyKey: body.idempotencyKey,
     })
 
+    const instrument =
+      charge.method === 'pix'
+        ? { pixQrCode: charge.pixQrCode }
+        : { boletoLine: charge.boletoLine }
+
     return {
       id: charge.id,
       status: charge.status,
-      amount: charge.amount.toString(),
-      pixQrCode: charge.pix_qr_code,
-      expiresAt: charge.expires_at,
+      amount: charge.amountCents.toString(),
+      ...instrument,
+      expiresAt: charge.expiresAt,
     }
   }
 
@@ -56,7 +61,7 @@ export class WalletController {
    * Read-model with the customer's wallet balances (available, reserved, total).
    * Ledger is the source of truth; amounts are cents-as-strings to survive JSON.
    */
-  @Get(':accountId/balances')
+  @Get(':accountId/balance')
   async getBalances(@Param('accountId', ParseUUIDPipe) accountId: string) {
     return this.wallet.findBalances(accountId)
   }
