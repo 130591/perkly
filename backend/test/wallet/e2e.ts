@@ -1,7 +1,5 @@
 import * as request from 'supertest'
 import { useIntegrationApp } from './setup'
-
-// Reexporta o seed para o spec e2e importar de um lugar só.
 export { seedWallet } from './setup'
 
 /**
@@ -20,9 +18,7 @@ export function useE2eApp() {
   const ctx = useIntegrationApp()
 
   return {
-    /** Contexto cru (ctx.ds para seed, ctx.get para providers) se precisar. */
     ctx,
-    /** Supertest apontado para o app; chame dentro do `it`, nunca no describe. */
     request: () => request(ctx.http()),
   }
 }
