@@ -1,10 +1,9 @@
 /**
- * PaymentRail — porta de saída para o PSP (settlement).
- *
- * Vocabulário de domínio in/out: nada aqui fala "Celcoin". `Psp` (mock) e
- * `CelcoinPaymentRail` (real) são dois implementadores da mesma porta; o service
- * depende desta abstração via o token `PAYMENT_RAIL`, nunca do concreto — é isso
- * que sustenta o princípio "Wallet não conhece PSP".
+ * PaymentRail — API pública (outbound) do contexto settle: como outros pedem
+ * movimento de dinheiro físico. Vocabulário de domínio in/out, nada de "Celcoin";
+ * `Psp` (mock) e `CelcoinPaymentRail` (real) implementam a mesma porta. O wallet
+ * consome via o token `PAYMENT_RAIL`, nunca o concreto — é isso que sustenta
+ * "Wallet não conhece o PSP".
  *
  * Cobre só `charge` (cash-in) por ora. `pay` (cash-out / payout) entra quando o
  * contexto Payout existir — declarar agora forçaria todo implementador a stubá-lo.

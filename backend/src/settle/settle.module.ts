@@ -1,16 +1,56 @@
 import { Module } from '@nestjs/common'
+import { SqsModule } from '@ssut/nestjs-sqs'
+import { SQSClient } from '@aws-sdk/client-sqs'
+import { ConfigService } from '../config/service'
 import { Psp } from './psp'
-import { CelcoinPaymentRail } from './client-celcoin'
+import { CelcoinPaymentRail } from './celcoin/rail'
 import { PAYMENT_RAIL } from './payment-rail'
-import { ConfigService } from '../wallet/config/service'
+import { CelcoinWebhookController } from './celcoin/webhook.controller'
+import { WebhookGuard } from './celcoin/webhook.guard'
+import { CASH_IN_QUEUE } from './queues'
 
+/**
+ * Contexto da camada FÍSICA de dinheiro (entrada/saída real via PSP). Self-
+ * contained: publica sua API pública (`PaymentRail` / token `PAYMENT_RAIL`) e
+ * seus eventos (`CashInConfirmed`), e encapsula o provider (Celcoin, trocável).
+ * NÃO conhece o wallet — quem depende é o wallet (injeta a rail, assina o evento).
+ *
+ * - Outbound: provê `PAYMENT_RAIL` (Celcoin real se houver credencial, senão Psp).
+ * - Inbound: recebe o webhook, normaliza e PUBLICA `CashInConfirmed` na fila. O
+ *   consumidor mora no wallet (o assinante); aqui só registramos o transporte SQS
+ *   — o poller casa com o handler decorado lá via descoberta app-wide.
+ */
 @Module({
-  imports: [],
-  exports: [PAYMENT_RAIL],
+  imports: [
+    SqsModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const sqs = config.get('sqs')
+        const client = new SQSClient({
+          endpoint: sqs.endpoint,
+          region: sqs.region,
+          credentials: {
+            accessKeyId: sqs.accessKeyId,
+            secretAccessKey: sqs.secretAccessKey,
+          },
+        })
+        return {
+          producers: [{ name: CASH_IN_QUEUE, queueUrl: sqs.queueUrl, sqs: client }],
+          // Em `test` NÃO ligamos o polling: o harness boota o AppModule inteiro e
+          // um poller de fundo puxaria fila (open handles, ruído em CI). O fluxo é
+          // exercido por teste dedicado.
+          consumers:
+            config.get('env') === 'test'
+              ? []
+              : [{ name: CASH_IN_QUEUE, queueUrl: sqs.queueUrl, sqs: client }],
+        }
+      },
+    }),
+  ],
+  controllers: [CelcoinWebhookController],
   providers: [
+    WebhookGuard,
     {
-      // Usa o client real do Celcoin quando há credencial configurada; sem ela
-      // (ex.: dev sem .env preenchido) cai no Psp mock, sem quebrar o boot.
       provide: PAYMENT_RAIL,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -19,5 +59,6 @@ import { ConfigService } from '../wallet/config/service'
       },
     },
   ],
+  exports: [PAYMENT_RAIL],
 })
 export class SettleModule {}

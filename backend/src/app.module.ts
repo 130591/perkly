@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { addTransactionalDataSource } from 'typeorm-transactional'
-import { ConfigModule } from './wallet/config/config.module'
-import { ConfigService } from './wallet/config/service'
+import { ConfigModule } from './config/config.module'
+import { ConfigService } from './config/service'
 import { WalletModule } from './wallet/wallet.module'
+import { SettleModule } from './settle/settle.module'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { WalletModule } from './wallet/wallet.module'
       },
     }),
     WalletModule,
+    SettleModule,
   ],
   controllers: [],
   providers: [],

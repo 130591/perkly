@@ -1,7 +1,8 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { Transactional } from 'typeorm-transactional'
 import { WalletRepository, ChargeRepository, LedgerRepository } from './database'
 import { PaymentRail, PAYMENT_RAIL } from '../settle/payment-rail'
+import { CashInConfirmed } from '../settle/rail-events'
 import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
@@ -13,6 +14,8 @@ type ChargeDto = {
 
 @Injectable()
 export class Wallet {
+  private readonly logger = new Logger(Wallet.name)
+
   constructor(
     private readonly walletRepo: WalletRepository,
     private readonly chargeRepo: ChargeRepository,
@@ -45,19 +48,26 @@ export class Wallet {
   }
 
   @Transactional()
-  async confirmBalance(pspChargeId: string) {
-    const charge = await this.chargeRepo.findByPspChargeId(pspChargeId)
+  async confirmBalance(event: CashInConfirmed) {
+    const charge = await this.chargeRepo.findByIdempotencyKeyForUpdate(event.reference)
     if (!charge) throw new NotFoundException('Charge not found')
-    if (charge.status === 'PAID') return // idempotent: already settled
+    if (charge.status === 'PAID') return
 
     const accountId = await this.walletRepo.findAccountId(charge.walletId)
     if (!accountId) throw new NotFoundException('Wallet account not found')
 
-    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(accountId))
-    const transaction = ledger.fund(BigInt(charge.amountCents))
+    const expected = BigInt(charge.amountCents)
+    if (event.amountCents !== expected) {
+      this.logger.warn(
+        `Cash-in amount mismatch for ${event.reference}: ` +
+          `confirmed ${event.amountCents} vs expected ${expected}; crediting confirmed`,
+      )
+    }
 
+    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(accountId))
+    const transaction = ledger.fund(event.amountCents, event.confirmedAt)
     const transactionId = await this.ledgerRepo.append(charge.walletId, transaction)
     await this.chargeRepo.markPaid(charge.id, transactionId)
-    await this.walletRepo.applyCredit(charge.walletId, charge.amountCents)
+    await this.walletRepo.applyCredit(charge.walletId, event.amountCents.toString())
   }
 }

@@ -11,8 +11,16 @@ export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
     super(ChargeEntity, dataSource.manager)
   }
 
-  findByPspChargeId(pspChargeId: string): Promise<ChargeEntity | null> {
-    return this.findOne({ where: { pspChargeId } })
+  /**
+   * Trava a linha do charge (SELECT … FOR UPDATE) pela nossa âncora de correlação
+   * (`idempotencyKey` = `reference` do webhook), serializando confirmações
+   * concorrentes do mesmo cash-in. Precisa rodar dentro de `@Transactional`.
+   */
+  findByIdempotencyKeyForUpdate(idempotencyKey: string): Promise<ChargeEntity | null> {
+    return this.findOne({
+      where: { idempotencyKey },
+      lock: { mode: 'pessimistic_write' },
+    })
   }
 
   create(input: {
