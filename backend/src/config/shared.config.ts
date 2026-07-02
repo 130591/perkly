@@ -1,6 +1,8 @@
 import { ConfigException } from './config.exception'
 import { celcoinConfigSchema } from './celcoin.config'
 import { databaseConfigSchema } from './database.config'
+import { sqsConfigSchema } from './sqs.config'
+import { webhookConfigSchema } from './webhook.config'
 import { z } from 'zod'
 
 export const environmentSchema = z.enum(['test', 'development', 'production'])
@@ -17,6 +19,10 @@ export const sharedConfigSchema = z.object({
   // Opcional enquanto a rail é o mock Psp: sem creds no ambiente, o bloco some
   // (não quebra o boot); com qualquer cred setada, é validado por inteiro.
   celcoin: celcoinConfigSchema.optional(),
+  // Sempre presentes: o factory sempre passa o bloco (com props undefined), e
+  // cada campo aplica seu default de dev (ElasticMQ local / segredo placeholder).
+  sqs: sqsConfigSchema,
+  webhook: webhookConfigSchema,
 })
 
 export type Environment = z.infer<typeof environmentSchema>
@@ -49,6 +55,16 @@ export const sharedConfigFactory = (): SharedConfig => {
       synchronize: process.env.DB_SYNCHRONIZE,
     },
     celcoin: celcoinEnv(),
+    sqs: {
+      endpoint: process.env.SQS_ENDPOINT,
+      region: process.env.SQS_REGION,
+      queueUrl: process.env.SQS_QUEUE_URL,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+    webhook: {
+      secret: process.env.WEBHOOK_SECRET,
+    },
   })
 
   if (result.success) {

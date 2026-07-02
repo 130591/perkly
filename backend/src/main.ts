@@ -2,7 +2,7 @@ import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { initializeTransactionalContext } from 'typeorm-transactional'
 import { AppModule } from './app.module'
-import { ConfigService } from './wallet/config/service'
+import { ConfigService } from './config/service'
 
 async function bootstrap() {
   // Must run before the DataSource is created so @Transactional() can hook it.
