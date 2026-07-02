@@ -17,5 +17,17 @@ services:
       timeout: 5s
       retries: 5
 
+  elasticmq:
+    image: softwaremill/elasticmq-native
+    container_name: perkly-elasticmq
+    restart: unless-stopped
+    ports:
+      - '${SQS_PORT:-9324}:9324'      # API REST SQS (endpoint do @aws-sdk/client-sqs)
+      - '${SQS_UI_PORT:-9325}:9325'   # UI / stats no navegador
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf:ro
+    # Sem healthcheck: a imagem native é distroless (sem shell/curl), então um
+    # probe CMD-SHELL não roda. Prontidão = porta 9324 aceitando conexão.
+
 volumes:
   perkly-pgdata:
