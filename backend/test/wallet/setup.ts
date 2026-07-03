@@ -51,7 +51,7 @@ export function useIntegrationApp(): IntegrationContext {
 
     const app = moduleRef.createNestApplication()
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     )
     await app.init()
 

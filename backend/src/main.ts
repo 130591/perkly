@@ -9,7 +9,9 @@ async function bootstrap() {
   initializeTransactionalContext()
   const app = await NestFactory.create(AppModule)
   // Validate request DTOs and strip unknown properties off the payload.
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+  )
   const config: ConfigService = app.get(ConfigService)
   await app.listen(config.get('port'))
 }
