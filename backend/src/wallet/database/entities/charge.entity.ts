@@ -1,5 +1,5 @@
 import { Column, Entity } from 'typeorm'
-import { DefaultEntity } from '../core/base.entity'
+import { DefaultEntity } from '../../../database/core/base.entity'
 
 /**
  * `charges` table. `idempotency_key` / `psp_charge_id` are expected to carry a
