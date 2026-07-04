@@ -1,96 +1,64 @@
-export type TransferType = 'pix'
-    
-export type Channel = 
- | { type: 'email', address: string }
- | { type: 'phone', number: string }
-    
-export type CampaingStatus = 'draft'  | 'confirmed'  |
- 'processing' | 'completed' | 'canceled'
+import { Batch, BatchStatus, BatchDraft } from './batch'
 
-export interface Recipient {
-  name: string,
-  amountCents: bigint,
-  channel: Channel
-}
+export type TransferType = 'pix'
+
+// Estados existem no vocabulário (auditoria/futuro confirm), mas na criação o
+// batch nasce e permanece `draft`. As transições (confirm/cancel) e os estados
+// derivados dos payouts (processing/completed) ficam para a fatia de confirmação.
+export type CampaignStatus = BatchStatus
 
 export type CampaignDraft = {
+  accountId: string,
   name: string,
   message: string,
   transferType?: TransferType,
-  linksExpireAt: Date,
-  recipients: Recipient[]
+  batches: BatchDraft[]
 }
 
 type CampaignProps = {
+  accountId: string,
   name: string,
   message: string,
   transferType: TransferType,
-  linksExpireAt: Date,
-  status: CampaingStatus,
-  recipients: Recipient[]
+  status: CampaignStatus,
+  batches: Batch[]
 }
 
 
 export class Campaign {
-  private constructor(
-    private readonly props: CampaignProps,
-  ) {}
+  private constructor(private readonly props: CampaignProps) {}
 
   static draft(command: CampaignDraft, now = new Date()): Campaign {
-    this.validateRecipients(command.recipients);
-    this.validateExpiration(command.linksExpireAt, now);
+    const batches = command.batches.map((batch) => Batch.draft(batch, now))
 
     return new Campaign({
-      ...command,
-      transferType: command.transferType ?? "pix",
-      status: "draft",
+      accountId: command.accountId,
+      name: command.name,
+      message: command.message,
+      transferType: command.transferType ?? 'pix',
+      status: 'draft',
+      batches,
     })
   }
 
-  private changeStatus(status: CampaingStatus) {
-    this.props.status = status;
+  static hydrate(props: CampaignProps): Campaign {
+    return new Campaign(props)
   }
 
-  private ensureStatus(
-    expected: CampaingStatus,
-    message: string,
-  ) {
+  private changeStatus(status: CampaignStatus) {
+    this.props.status = status
+  }
+
+  private ensureStatus(expected: CampaignStatus, message: string) {
     if (this.props.status !== expected) {
       throw new Error(message)
     }
   }
 
-  private ensureNotExpired(now: Date) {
-    if (this.props.linksExpireAt <= now) {
-      throw new Error("expired")
-    }
+  get accountId() {
+    return this.props.accountId
   }
 
-  private is(status: CampaingStatus) {
-    return this.props.status === status
-  }
-
-  private static validateRecipients(
-    recipients: Recipient[],
-  ) {
-    if (recipients.length === 0) {
-      throw new Error("at least one recipient")
-    }
-
-    if (recipients.some(r => r.amountCents <= 0n)) {
-      throw new Error("amount must be positive")
-    }
-  }
-
-  private static validateExpiration(
-    expiresAt: Date,
-    now: Date,
-  ) {
-    if (expiresAt <= now) {
-      throw new Error("must be in the future")
-    }
-  }
-  
   get name() {
     return this.props.name
   }
@@ -107,42 +75,20 @@ export class Campaign {
     return this.props.status
   }
 
-  get recipients(): readonly Recipient[] {
-    return this.props.recipients
+  get batches(): readonly Batch[] {
+    return this.props.batches
   }
 
-  get linksExpireAt() {
-    return this.props.linksExpireAt
-  }
-
+  // Guarda o próprio estado e delega a transição a cada batch (Tell, Don't Ask):
+  // a validação de expiração vive no Batch; o Campaign orquestra e faz o rollup.
+  // A reserva de saldo é do service (porta do wallet), não do domínio.
   confirm(now: Date) {
-    this.ensureStatus("draft", "cannot confirm")
-    this.ensureNotExpired(now)
-    this.changeStatus("confirmed")
-  }
-
-  startProcessing() {
-    this.ensureStatus("confirmed", "cannot start processing")
-    this.changeStatus("processing")
-  }
-
-  complete() {
-    this.ensureStatus("processing", "cannot complete")
-    this.changeStatus("completed")
-  }
-
-  cancel() {
-    if (this.is("processing") || this.is("completed")) {
-      throw new Error("cannot cancel")
-    }
-
-    this.changeStatus("canceled")
+    this.ensureStatus('draft', 'cannot confirm')
+    this.props.batches.forEach((batch) => batch.confirm(now))
+    this.changeStatus('confirmed')
   }
 
   total(): bigint {
-    return this.props.recipients.reduce(
-      (sum, recipient) => sum + recipient.amountCents,
-      0n,
-    )
+    return this.props.batches.reduce((sum, batch) => sum + batch.total(), 0n)
   }
 }

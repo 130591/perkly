@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../database/core/typeorm'
-import { CampaignEntity } from './campaign.entity'
-import { Campaign } from './campaign'
+import { CampaignEntity, BatchEntity } from './campaign.entity'
+import { Campaign, CampaignStatus, TransferType } from './campaign'
+import { Batch, BatchStatus } from './batch'
 
 @Injectable()
 export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity> {
@@ -14,17 +15,62 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
   async create(campaign: Campaign): Promise<CampaignEntity> {
     return await this.save(
       new CampaignEntity({
+        accountId: campaign.accountId,
         name: campaign.name,
         message: campaign.message,
         transferType: campaign.transferType,
         status: campaign.status,
-        linksExpireAt: campaign.linksExpireAt,
-        recipients: campaign.recipients.map((recipient) => ({
-          name: recipient.name,
-          amountCents: recipient.amountCents.toString(),
-          channel: recipient.channel,
-        })),
+        batches: campaign.batches.map(
+          (batch) =>
+            new BatchEntity({
+              status: batch.status,
+              linksExpireAt: batch.linksExpireAt,
+              recipients: batch.recipients.map((recipient) => ({
+                name: recipient.name,
+                amountCents: recipient.amountCents.toString(),
+                channel: recipient.channel,
+              })),
+            }),
+        ),
       }),
     )
+  }
+
+  findWithBatches(externalId: string): Promise<CampaignEntity | null> {
+    return this.findOneById(externalId, ['batches'])
+  }
+
+  toDomain(entity: CampaignEntity): Campaign {
+    return Campaign.hydrate({
+      accountId: entity.accountId,
+      name: entity.name,
+      message: entity.message,
+      transferType: entity.transferType as TransferType,
+      status: entity.status as CampaignStatus,
+      batches: entity.batches.map((batch) =>
+        Batch.hydrate({
+          linksExpireAt: batch.linksExpireAt,
+          status: batch.status as BatchStatus,
+          recipients: batch.recipients.map((recipient) => ({
+            name: recipient.name,
+            amountCents: BigInt(recipient.amountCents),
+            channel: recipient.channel,
+          })),
+        }),
+      ),
+    })
+  }
+
+  /**
+   * Persiste o resultado de uma transição, copiando o status do agregado para a
+   * entidade carregada (mesma ordem de batches que o `toDomain` produziu). O
+   * cascade do @OneToMany grava campanha + batches na mesma transação.
+   */
+  saveStatuses(entity: CampaignEntity, campaign: Campaign): Promise<CampaignEntity> {
+    entity.status = campaign.status
+    entity.batches.forEach((batch, i) => {
+      batch.status = campaign.batches[i].status
+    })
+    return this.save(entity)
   }
 }

@@ -5,18 +5,15 @@ import {
   IsIn,
   IsNotEmpty,
   IsString,
+  IsUUID,
   ValidateNested,
   ValidateIf,
   IsNumberString,
 } from 'class-validator';
 import { Type } from 'class-transformer'
 
-import {
-  CampaignDraft,
-  Recipient,
-  Channel,
-  TransferType,
-} from './campaign'
+import { CampaignDraft, TransferType } from './campaign'
+import { BatchDraft, Recipient, Channel } from './batch'
 
 export class ChannelDto {
   @IsIn(['email', 'phone'])
@@ -67,7 +64,28 @@ export class RecipientDto {
   }
 }
 
+export class BatchDto {
+  @Type(() => Date)
+  @IsDate()
+  linksExpireAt: Date
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RecipientDto)
+  recipients: RecipientDto[]
+
+  toCommand(): BatchDraft {
+    return {
+      linksExpireAt: this.linksExpireAt,
+      recipients: this.recipients.map(r => r.toDomain()),
+    }
+  }
+}
+
 export class CampaignBody {
+  @IsUUID()
+  accountId: string
+
   @IsString()
   @IsNotEmpty()
   name: string
@@ -79,22 +97,18 @@ export class CampaignBody {
   @IsIn(['pix'])
   transferType?: TransferType
 
-  @Type(() => Date)
-  @IsDate()
-  linksExpireAt: Date
-
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RecipientDto)
-  recipients: RecipientDto[]
+  @Type(() => BatchDto)
+  batches: BatchDto[]
 
   toCommand(): CampaignDraft {
     return {
+      accountId: this.accountId,
       name: this.name,
       message: this.message,
       transferType: this.transferType,
-      linksExpireAt: this.linksExpireAt,
-      recipients: this.recipients.map(r => r.toDomain()),
+      batches: this.batches.map(b => b.toCommand()),
     }
   }
 }

@@ -1,11 +1,18 @@
-import { Column, Entity } from 'typeorm'
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm'
 import { DefaultEntity } from '../database/core/base.entity'
-import { Channel } from './campaign'
+import { Channel } from './batch'
 
 /**
- * Recipients are stored inline as jsonb — they are value objects owned by the
- * campaign, not independently queried. `amountCents` is a decimal string (not a
- * JSON number) so the domain bigint survives the round-trip without float loss.
+ * Recipients are stored inline on the batch as jsonb — proto-payouts, not yet
+ * independently queried. `amountCents` is a decimal string (not a JSON number)
+ * so the domain bigint survives the round-trip without float loss. They become
+ * first-class Payout rows when the confirmation flow lands.
  */
 type StoredRecipient = {
   name: string
@@ -13,8 +20,17 @@ type StoredRecipient = {
   channel: Channel
 }
 
+// CampaignEntity precede BatchEntity de propósito: `emitDecoratorMetadata`
+// emite o `design:type` de `batch.campaign` de forma eager, então a classe
+// referenciada já precisa estar inicializada. A volta (`batches: BatchEntity[]`)
+// vira metadata `Array`, sem referência direta — por isso não exige o inverso.
 @Entity('campaigns')
 export class CampaignEntity extends DefaultEntity<CampaignEntity> {
+  // external_id da conta dona (contexto wallet). Referência solta, não FK: o
+  // schema do campaign não conhece as tabelas do wallet.
+  @Column({ name: 'account_id', type: 'uuid' })
+  accountId: string
+
   @Column()
   name: string
 
@@ -23,6 +39,21 @@ export class CampaignEntity extends DefaultEntity<CampaignEntity> {
 
   @Column({ name: 'transfer_type' })
   transferType: string
+
+  @Column()
+  status: string
+
+  @OneToMany(() => BatchEntity, (batch) => batch.campaign, { cascade: true })
+  batches: BatchEntity[]
+}
+
+@Entity('batches')
+export class BatchEntity extends DefaultEntity<BatchEntity> {
+  @ManyToOne(() => CampaignEntity, (campaign) => campaign.batches, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'campaign_id' })
+  campaign: CampaignEntity
 
   @Column()
   status: string
