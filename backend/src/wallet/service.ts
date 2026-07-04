@@ -3,6 +3,7 @@ import { Transactional } from 'typeorm-transactional'
 import { WalletRepository, ChargeRepository, LedgerRepository } from './database'
 import { PaymentRail, PAYMENT_RAIL } from '../settle/payment-rail'
 import { CashInConfirmed } from '../settle/rail-events'
+import { BalanceReservation, ReserveBalance } from './balance-reservation'
 import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
@@ -13,7 +14,7 @@ type ChargeDto = {
 }
 
 @Injectable()
-export class Wallet {
+export class Wallet implements BalanceReservation {
   private readonly logger = new Logger(Wallet.name)
 
   constructor(
@@ -40,6 +41,21 @@ export class Wallet {
     return charge
   }
  
+  /**
+   * Compromete saldo (available → reserved) para um consumidor externo (ex.: a
+   * confirmação de uma campanha). Porta pública `BalanceReservation`: o chamador
+   * fala vocabulário de domínio; o ledger e o overdraft-guard ficam aqui dentro.
+   */
+  @Transactional()
+  async reserve(input: ReserveBalance): Promise<void> {
+    const wallet = await this.walletRepo.findByAccountId(input.accountId)
+    if (!wallet) throw new NotFoundException('Wallet not found')
+
+    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
+    const transaction = ledger.reserve(input.amountCents)
+    await this.ledgerRepo.append(wallet.id, transaction)
+  }
+
   async findBalances(accountId: string) {
     const wallet = await this.walletRepo.findByAccountId(accountId)
     if (!wallet) throw new NotFoundException('Wallet not found')
