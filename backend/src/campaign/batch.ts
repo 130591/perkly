@@ -77,4 +77,10 @@ export class Batch {
       throw new Error('must be in the future')
     }
   }
+    
+  ensureCanActivate(now: Date) {
+    if (this.props.linksExpireAt <= now) {
+      throw new Error('batch expired')
+    }
+  }
 }

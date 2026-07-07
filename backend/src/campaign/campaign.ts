@@ -86,9 +86,9 @@ export class Campaign {
   activate(now: Date) {
     this.ensureStatus('draft', 'campaign is not draft')
     for (const batch of this.props.batches) {
-      batch.ensureCanConfirm(now)
+      batch.ensureCanActivate(now)
     }
-    this.changeStatus('confirmed')
+    this.changeStatus('active')
   }
 
   total(): bigint {
