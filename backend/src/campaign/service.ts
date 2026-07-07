@@ -34,7 +34,7 @@ export class CampaignService {
     if (!entity) throw new NotFoundException('Campaign not found')
 
     const campaign = this.repository.toDomain(entity)
-    campaign.confirm(new Date())
+    campaign.activate(new Date())
 
     await this.reservation.reserve({
       accountId: campaign.accountId,

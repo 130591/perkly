@@ -1,11 +1,15 @@
-import { Batch, BatchStatus, BatchDraft } from './batch'
+import { Batch, BatchDraft } from './batch'
 
 export type TransferType = 'pix'
 
 // Estados existem no vocabulário (auditoria/futuro confirm), mas na criação o
 // batch nasce e permanece `draft`. As transições (confirm/cancel) e os estados
 // derivados dos payouts (processing/completed) ficam para a fatia de confirmação.
-export type CampaignStatus = BatchStatus
+export type CampaignStatus =
+  | 'draft'
+  | 'active'
+  | 'closed'
+  | 'canceled'
 
 export type CampaignDraft = {
   accountId: string,
@@ -29,7 +33,7 @@ export class Campaign {
   private constructor(private readonly props: CampaignProps) {}
 
   static draft(command: CampaignDraft, now = new Date()): Campaign {
-    const batches = command.batches.map((batch) => Batch.draft(batch, now))
+    const batches = command.batches.map((batch) => Batch.create(batch, now))
 
     return new Campaign({
       accountId: command.accountId,
@@ -79,12 +83,11 @@ export class Campaign {
     return this.props.batches
   }
 
-  // Guarda o próprio estado e delega a transição a cada batch (Tell, Don't Ask):
-  // a validação de expiração vive no Batch; o Campaign orquestra e faz o rollup.
-  // A reserva de saldo é do service (porta do wallet), não do domínio.
-  confirm(now: Date) {
-    this.ensureStatus('draft', 'cannot confirm')
-    this.props.batches.forEach((batch) => batch.confirm(now))
+  activate(now: Date) {
+    this.ensureStatus('draft', 'campaign is not draft')
+    for (const batch of this.props.batches) {
+      batch.ensureCanConfirm(now)
+    }
     this.changeStatus('confirmed')
   }
 

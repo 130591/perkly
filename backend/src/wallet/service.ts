@@ -50,7 +50,6 @@ export class Wallet implements BalanceReservation {
   async reserve(input: ReserveBalance): Promise<void> {
     const wallet = await this.walletRepo.findByAccountId(input.accountId)
     if (!wallet) throw new NotFoundException('Wallet not found')
-
     const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
     const transaction = ledger.reserve(input.amountCents)
     await this.ledgerRepo.append(wallet.id, transaction)
