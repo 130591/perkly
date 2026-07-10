@@ -7,6 +7,7 @@ import { ConfigService } from './config/service'
 import { WalletModule } from './wallet/wallet.module'
 import { SettleModule } from './settle/settle.module'
 import { CampaignModule } from './campaign/campaign.module'
+import { PayoutModule } from './payout/payout.module'
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { CampaignModule } from './campaign/campaign.module'
     }),
     WalletModule,
     SettleModule,
-    CampaignModule
+    CampaignModule,
+    PayoutModule,
   ],
   controllers: [],
   providers: [],
