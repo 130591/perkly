@@ -64,6 +64,11 @@ cruza uma fronteira (API, URL, fila).
 
 ### 4. Publicação **depois** do commit
 
+> **⚠️ Superada pela RFC 0002.** A janela commit↔send descrita aqui mostrou-se
+> mais cara que o previsto (campanha-zumbi com saldo travado e sem recuperação).
+> O hop `campaign-activated` foi removido: o fan-out passou a **varrer** o estado
+> durável da campanha em vez de reagir a um evento. Ver RFC 0002.
+
 `confirm()` é `@Transactional`. O `CampaignActivated` é publicado via
 `runOnTransactionCommit`, só após o commit. Falha no `send` é logada, não
 relançada (a resposta HTTP não deve falhar — a campanha já está ativada).
@@ -156,8 +161,9 @@ Ambas as filas têm DLQ com `maxReceiveCount = 5` (`elasticmq.conf`).
 
 ## Adiado (dívida consciente)
 
-- **Outbox** para garantia forte de entrega do `CampaignActivated` (fecha a
-  janela commit↔send da Decisão 4).
+- ~~**Outbox** para garantia forte de entrega do `CampaignActivated` (fecha a
+  janela commit↔send da Decisão 4).~~ **Resolvido pela RFC 0002** por outra via:
+  varredura do estado durável da campanha (sem evento a se perder).
 - **Recipients como linhas** (não `jsonb` inline) quando um único batch puder ter
   dezenas de milhares — permite paginação real no banco (Decisão 5).
 - **Publisher real de eventos** (SQS) quando o contexto Claim assinar
