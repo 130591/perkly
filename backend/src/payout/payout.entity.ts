@@ -6,7 +6,7 @@ import {
   OneToMany,
 } from 'typeorm'
 import { DefaultEntity } from '../database/core/base.entity'
-import { Channel } from '../campaign/batch'
+import { Channel } from '../campaign/domain/batch'
 
 @Entity('payout')
 export class PayoutEntity extends DefaultEntity<PayoutEntity> {

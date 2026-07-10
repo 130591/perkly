@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { Transactional } from 'typeorm-transactional'
-import { CampaignRepository } from './repository'
-import { Campaign, CampaignDraft } from './campaign'
+import { CampaignRepository } from './database/repository'
+import { Campaign, CampaignDraft } from './domain/campaign'
 import {
   BALANCE_RESERVATION,
   BalanceReservation,

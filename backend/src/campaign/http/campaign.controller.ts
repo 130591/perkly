@@ -1,5 +1,5 @@
 import { Body, Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common'
-import { CampaignService } from './service'
+import { CampaignService } from '../service'
 import { CampaignBody } from './transport'
 
 @Controller('campaign')

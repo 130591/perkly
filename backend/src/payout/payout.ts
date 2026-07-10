@@ -1,4 +1,4 @@
-import { Recipient } from '../campaign/batch'
+import { Recipient } from '../campaign/domain/batch'
 
 export type PayoutStatus =
   | 'pending'    // aguardando resgate

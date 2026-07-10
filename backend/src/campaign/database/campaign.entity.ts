@@ -5,8 +5,8 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm'
-import { DefaultEntity } from '../database/core/base.entity'
-import { Channel } from './batch'
+import { DefaultEntity } from '../../database/core/base.entity'
+import { Channel } from '../domain/batch'
 
 /**
  * Recipients are stored inline on the batch as jsonb — proto-payouts, not yet

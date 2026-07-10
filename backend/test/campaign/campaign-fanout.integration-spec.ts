@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { SqsService } from '@ssut/nestjs-sqs'
 import { useIntegrationApp } from '../wallet/setup'
-import { CampaignFanoutWorker } from '../../src/campaign/campaign-fanout.worker'
-import { CampaignRepository } from '../../src/campaign/repository'
+import { CampaignFanoutWorker } from '../../src/campaign/messaging/campaign-fanout.worker'
+import { CampaignRepository } from '../../src/campaign/database/repository'
 import {
   CampaignEntity,
   BatchEntity,
-} from '../../src/campaign/campaign.entity'
-import { parsePayoutBatchRequested } from '../../src/campaign/campaign-events.codec'
-import { PAYOUT_BATCH_QUEUE } from '../../src/campaign/queues'
+} from '../../src/campaign/database/campaign.entity'
+import { parsePayoutBatchRequested } from '../../src/campaign/messaging/campaign-events.codec'
+import { PAYOUT_BATCH_QUEUE } from '../../src/campaign/messaging/queues'
 
 const FUTURE = new Date(Date.now() + 24 * 60 * 60 * 1000)
 

@@ -6,7 +6,7 @@ import { PayoutRepository } from './repository'
 import { CreatePayoutConsumer } from './create-payouts.consumer'
 import { DomainEventPublisher } from './events'
 import { LoggingDomainEventPublisher } from './event-publisher'
-import { PAYOUT_BATCH_QUEUE } from '../campaign/queues'
+import { PAYOUT_BATCH_QUEUE } from '../campaign/messaging/queues'
 import { ConfigService } from '../config/service'
 import { queueUrl } from '../config/sqs.config'
 

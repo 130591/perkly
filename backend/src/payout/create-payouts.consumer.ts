@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Message } from '@aws-sdk/client-sqs'
 import { SqsMessageHandler } from '@ssut/nestjs-sqs'
 import { PayoutService } from './service'
-import { parsePayoutBatchRequested } from '../campaign/campaign-events.codec'
-import { PAYOUT_BATCH_QUEUE } from '../campaign/queues'
+import { parsePayoutBatchRequested } from '../campaign/messaging/campaign-events.codec'
+import { PAYOUT_BATCH_QUEUE } from '../campaign/messaging/queues'
 
 /**
  * Assina `PayoutBatchRequested` — uma página de recipients publicada pelo fan-out

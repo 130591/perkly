@@ -1,5 +1,5 @@
-import { Campaign } from '../../src/campaign/campaign'
-import { Batch, Recipient, BatchDraft } from '../../src/campaign/batch'
+import { Campaign } from '../../src/campaign/domain/campaign'
+import { Batch, Recipient, BatchDraft } from '../../src/campaign/domain/batch'
 
 // relógio fixo: os testes de expiração não podem depender do horário da máquina
 const now = new Date('2026-07-02T12:00:00Z')

@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common'
 import { SqsService } from '@ssut/nestjs-sqs'
 import { Transactional } from 'typeorm-transactional'
-import { CampaignRepository } from './repository'
+import { CampaignRepository } from '../database/repository'
 import { serializePayoutBatchRequested } from './campaign-events.codec'
 import { PayoutBatchRequested, PayoutRecipient } from './campaign-events'
 import { PAYOUT_BATCH_QUEUE } from './queues'
-import { ConfigService } from '../config/service'
+import { ConfigService } from '../../config/service'
 
 /** Recipients por mensagem — mantém o corpo bem abaixo dos 256 KB do SQS. */
 const PAGE_SIZE = 500
