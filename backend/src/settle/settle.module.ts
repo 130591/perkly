@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { SqsModule } from '@ssut/nestjs-sqs'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { ConfigService } from '../config/service'
+import { queueUrl } from '../config/sqs.config'
 import { Psp } from './psp'
 import { CelcoinPaymentRail } from './celcoin/rail'
 import { PAYMENT_RAIL } from './payment-rail'
@@ -34,15 +35,16 @@ import { CASH_IN_QUEUE } from './queues'
             secretAccessKey: sqs.secretAccessKey,
           },
         })
+        const url = queueUrl(sqs, CASH_IN_QUEUE)
         return {
-          producers: [{ name: CASH_IN_QUEUE, queueUrl: sqs.queueUrl, sqs: client }],
+          producers: [{ name: CASH_IN_QUEUE, queueUrl: url, sqs: client }],
           // Em `test` NÃO ligamos o polling: o harness boota o AppModule inteiro e
           // um poller de fundo puxaria fila (open handles, ruído em CI). O fluxo é
           // exercido por teste dedicado.
           consumers:
             config.get('env') === 'test'
               ? []
-              : [{ name: CASH_IN_QUEUE, queueUrl: sqs.queueUrl, sqs: client }],
+              : [{ name: CASH_IN_QUEUE, queueUrl: url, sqs: client }],
         }
       },
     }),
