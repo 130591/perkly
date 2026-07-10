@@ -27,6 +27,12 @@ export class Batch {
     return new Batch(command)
   }
 
+  // Reconstrói do estado persistido sem revalidar (dados já foram válidos na
+  // criação; expiração no passado é legítima para uma campanha antiga).
+  static hydrate(props: BatchProps): Batch {
+    return new Batch(props)
+  }
+
   get recipients(): readonly Recipient[] {
     return this.props.recipients
   }

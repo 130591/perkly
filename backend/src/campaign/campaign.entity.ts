@@ -55,9 +55,6 @@ export class BatchEntity extends DefaultEntity<BatchEntity> {
   @JoinColumn({ name: 'campaign_id' })
   campaign: CampaignEntity
 
-  @Column()
-  status: string
-
   @Column({ name: 'links_expire_at', type: 'timestamptz' })
   linksExpireAt: Date
 

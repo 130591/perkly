@@ -21,7 +21,7 @@ const batchDraft = (overrides: Partial<BatchDraft> = {}): BatchDraft => ({
 })
 
 const batch = (overrides: Partial<BatchDraft> = {}) =>
-  Batch.draft(batchDraft(overrides), now)
+  Batch.create(batchDraft(overrides), now)
 
 const campaign = (overrides: object = {}) =>
   Campaign.draft(
@@ -37,10 +37,9 @@ const campaign = (overrides: object = {}) =>
   )
 
 describe('Batch — criação', () => {
-  it('cria batch em draft com seus recipients', () => {
+  it('agrupa seus recipients', () => {
     const b = batch()
 
-    expect(b.status).toBe('draft')
     expect(b.recipients).toHaveLength(1)
   })
 
@@ -99,7 +98,6 @@ describe('Campaign — criação', () => {
     expect(c.name).toBe('Pesquisa NPS')
     expect(c.transferType).toBe('pix')
     expect(c.batches).toHaveLength(1)
-    expect(c.batches[0].status).toBe('draft')
   })
 
   it('assume pix como tipo de transferência quando não informado', () => {
@@ -136,45 +134,25 @@ describe('Campaign — criação', () => {
   })
 })
 
-describe('Batch — confirm', () => {
-  it('confirm: draft → confirmed', () => {
-    const b = batch()
-    b.confirm(now)
-    expect(b.status).toBe('confirmed')
-  })
-
-  it('recusa confirmar batch que não está em draft', () => {
-    const b = batch()
-    b.confirm(now)
-    expect(() => b.confirm(now)).toThrow(/cannot confirm/)
-  })
-
-  it('recusa confirmar quando os links já expiraram', () => {
-    const b = batch()
-    expect(() => b.confirm(afterExpiry)).toThrow(/expired/)
-  })
-})
-
-describe('Campaign — confirm (cascade nos batches)', () => {
-  it('confirma a campanha e cada batch', () => {
+describe('Campaign — activate', () => {
+  it('ativa a campanha (draft → active)', () => {
     const c = campaign({ batches: [batchDraft(), batchDraft()] })
 
-    c.confirm(now)
+    c.activate(now)
 
-    expect(c.status).toBe('confirmed')
-    expect(c.batches.every((b) => b.status === 'confirmed')).toBe(true)
+    expect(c.status).toBe('active')
   })
 
-  it('recusa confirmar campanha que não está em draft', () => {
+  it('recusa ativar campanha que não está em draft', () => {
     const c = campaign()
-    c.confirm(now)
-    expect(() => c.confirm(now)).toThrow(/cannot confirm/)
+    c.activate(now)
+    expect(() => c.activate(now)).toThrow(/not draft/)
   })
 
   it('falha (e não transiciona) se um batch estiver expirado', () => {
     const c = campaign()
 
-    expect(() => c.confirm(afterExpiry)).toThrow(/expired/)
+    expect(() => c.activate(afterExpiry)).toThrow(/batch expired/)
     expect(c.status).toBe('draft')
   })
 })

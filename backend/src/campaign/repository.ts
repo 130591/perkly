@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../database/core/typeorm'
 import { CampaignEntity, BatchEntity } from './campaign.entity'
 import { Campaign, CampaignStatus, TransferType } from './campaign'
-import { Batch, BatchStatus } from './batch'
+import { Batch } from './batch'
 
 @Injectable()
 export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity> {
@@ -23,7 +23,6 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
         batches: campaign.batches.map(
           (batch) =>
             new BatchEntity({
-              status: batch.status,
               linksExpireAt: batch.linksExpireAt,
               recipients: batch.recipients.map((recipient) => ({
                 name: recipient.name,
@@ -50,7 +49,6 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
       batches: entity.batches.map((batch) =>
         Batch.hydrate({
           linksExpireAt: batch.linksExpireAt,
-          status: batch.status as BatchStatus,
           recipients: batch.recipients.map((recipient) => ({
             name: recipient.name,
             amountCents: BigInt(recipient.amountCents),
@@ -62,15 +60,12 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
   }
 
   /**
-   * Persiste o resultado de uma transição, copiando o status do agregado para a
-   * entidade carregada (mesma ordem de batches que o `toDomain` produziu). O
+   * Persiste o resultado de uma transição de ciclo de vida. O status vive só na
+   * campanha (o batch é agrupamento de recipients, sem lifecycle próprio). O
    * cascade do @OneToMany grava campanha + batches na mesma transação.
    */
   saveStatuses(entity: CampaignEntity, campaign: Campaign): Promise<CampaignEntity> {
     entity.status = campaign.status
-    entity.batches.forEach((batch, i) => {
-      batch.status = campaign.batches[i].status
-    })
     return this.save(entity)
   }
 }
