@@ -6,6 +6,10 @@ import {
 
 import { CashInConfirmed } from '../rail-events'
 
+// Tipo de entrada público do normalizer — o spec (e outros consumidores) o
+// importam daqui, junto de `normalizeCashIn`.
+export type { CelcoinPixIn } from './webhook.schema'
+
 const CENTS_PER_REAL = 100
 
 const reaisToCents = (reais: number): bigint =>
