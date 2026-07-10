@@ -4,8 +4,8 @@ import { SQSClient } from '@aws-sdk/client-sqs'
 import { CampaignController } from './campaign.controller'
 import { CampaignService } from './service'
 import { CampaignRepository } from './repository'
-import { CampaignFanoutConsumer } from './campaign-fanout.consumer'
-import { CAMPAIGN_ACTIVATED_QUEUE, PAYOUT_BATCH_QUEUE } from './queues'
+import { CampaignFanoutWorker } from './campaign-fanout.worker'
+import { PAYOUT_BATCH_QUEUE } from './queues'
 import { WalletModule } from '../wallet/wallet.module'
 import { ConfigService } from '../config/service'
 import { queueUrl } from '../config/sqs.config'
@@ -15,10 +15,10 @@ import { queueUrl } from '../config/sqs.config'
   // depende do wallet; a comunicação é só pela porta exportada, nunca acesso
   // direto ao service ou aos repositórios de lá.
   //
-  // SQS: o `confirm` publica `campaign-activated` (magro); o
-  // `CampaignFanoutConsumer` assina essa fila e publica `payout-batch-requested`
-  // (páginas). Campaign é produtor das duas e consumidor da primeira — o payout
-  // consome a segunda no módulo dele. Igual settle: em `test` não ligamos o poller.
+  // SQS: campaign só PRODUZ `payout-batch-requested` (o `CampaignFanoutWorker`
+  // pagina a campanha e publica; o payout consome no módulo dele). Não consome
+  // fila nenhuma — o gatilho do fan-out é a varredura do estado da campanha
+  // (`status='active' AND fanned_out_at IS NULL`), não um evento (RFC 0002).
   imports: [
     WalletModule,
     SqsModule.registerAsync({
@@ -33,20 +33,15 @@ import { queueUrl } from '../config/sqs.config'
             secretAccessKey: sqs.secretAccessKey,
           },
         })
-        const queue = (name: string) => ({
-          name,
-          queueUrl: queueUrl(sqs, name),
-          sqs: client,
-        })
         return {
-          producers: [queue(CAMPAIGN_ACTIVATED_QUEUE), queue(PAYOUT_BATCH_QUEUE)],
-          consumers:
-            config.get('env') === 'test' ? [] : [queue(CAMPAIGN_ACTIVATED_QUEUE)],
+          producers: [
+            { name: PAYOUT_BATCH_QUEUE, queueUrl: queueUrl(sqs, PAYOUT_BATCH_QUEUE), sqs: client },
+          ],
         }
       },
     }),
   ],
   controllers: [CampaignController],
-  providers: [CampaignService, CampaignRepository, CampaignFanoutConsumer],
+  providers: [CampaignService, CampaignRepository, CampaignFanoutWorker],
 })
 export class CampaignModule {}

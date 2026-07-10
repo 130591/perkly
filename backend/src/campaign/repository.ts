@@ -39,6 +39,39 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
     return this.findOneById(externalId, ['batches'])
   }
 
+  /**
+   * Reivindica UMA campanha ativa ainda sem fan-out, travando a linha
+   * (`FOR UPDATE SKIP LOCKED`): scanners concorrentes pulam em vez de
+   * reprocessar. `null` = sem trabalho. Deve rodar na tx do worker — o lock vive
+   * até o commit (grava `fanned_out_at`) ou rollback (crash → devolve à fila).
+   *
+   * O lock é num SELECT só da tabela `campaigns` (sem join); os batches vêm num
+   * 2º SELECT (`findWithBatches`), porque `FOR UPDATE` não pode ser aplicado ao
+   * lado nulável do LEFT JOIN da relação. `deleted_at IS NULL` é explícito: o
+   * query builder cru não aplica o filtro de soft-delete que o `find` aplicaria.
+   */
+  async claimPendingFanout(): Promise<CampaignEntity | null> {
+    const locked = await this.manager
+      .createQueryBuilder(CampaignEntity, 'campaign')
+      .where('campaign.status = :status', { status: 'active' })
+      .andWhere('campaign.fannedOutAt IS NULL')
+      .andWhere('campaign.deletedAt IS NULL')
+      .orderBy('campaign.id', 'ASC')
+      .setLock('pessimistic_write')
+      .setOnLocked('skip_locked')
+      .limit(1)
+      .getOne()
+
+    if (!locked) return null
+    return this.findWithBatches(locked.externalId)
+  }
+
+  /** Marca o fan-out concluído. Chamado POR ÚLTIMO, no mesmo commit dos envios. */
+  markFannedOut(entity: CampaignEntity, at: Date): Promise<CampaignEntity> {
+    entity.fannedOutAt = at
+    return this.save(entity)
+  }
+
   toDomain(entity: CampaignEntity): Campaign {
     return Campaign.hydrate({
       accountId: entity.accountId,

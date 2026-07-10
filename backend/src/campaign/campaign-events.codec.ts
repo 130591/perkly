@@ -1,5 +1,4 @@
 import {
-  CampaignActivated,
   PayoutBatchRequested,
   PayoutRecipient,
 } from './campaign-events'
@@ -8,26 +7,9 @@ import {
  * Codec do wire-format dos eventos do campaign no SQS.
  *
  * Conhecimento ÚNICO da forma na fila (DRY): `bigint`→string, `Date`→ISO —
- * porque nem `bigint` nem `Date` sobrevivem ao `JSON.stringify`. Cada `parse`
+ * porque nem `bigint` nem `Date` sobrevivem ao `JSON.stringify`. O `parse`
  * (consumidor) mora ao lado do seu `serialize` pra não divergir.
  */
-export function serializeCampaignActivated(event: CampaignActivated): string {
-  return JSON.stringify({
-    campaignId: event.campaignId,
-    accountId: event.accountId,
-    occurredAt: event.occurredAt.toISOString(),
-  })
-}
-
-export function parseCampaignActivated(body: string): CampaignActivated {
-  const raw = JSON.parse(body) as Record<string, unknown>
-  return {
-    campaignId: asString(raw, 'campaignId'),
-    accountId: asString(raw, 'accountId'),
-    occurredAt: new Date(asString(raw, 'occurredAt')),
-  }
-}
-
 export function serializePayoutBatchRequested(
   event: PayoutBatchRequested,
 ): string {

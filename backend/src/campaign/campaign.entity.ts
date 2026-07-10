@@ -43,6 +43,13 @@ export class CampaignEntity extends DefaultEntity<CampaignEntity> {
   @Column()
   status: string
 
+  // Marcador de despacho assíncrono (não é estado de domínio): NULL enquanto o
+  // fan-out não emitiu as páginas de payout. O `CampaignFanoutWorker` varre
+  // `status='active' AND fanned_out_at IS NULL` — a linha é a fila de trabalho,
+  // sem evento a se perder (RFC 0002). Gravado só ao final do fan-out.
+  @Column({ name: 'fanned_out_at', type: 'timestamptz', nullable: true })
+  fannedOutAt: Date | null
+
   @OneToMany(() => BatchEntity, (batch) => batch.campaign, { cascade: true })
   batches: BatchEntity[]
 }
