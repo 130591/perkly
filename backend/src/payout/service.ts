@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Transactional } from 'typeorm-transactional'
-import { PayoutRepository } from './repository'
+import { PayoutRepository } from './database/repository'
 import { PayoutBatchRequested } from '../campaign/messaging/campaign-events'
 import { Payout } from './payout'
 import { DomainEventPublisher, PayoutCreated } from './events'

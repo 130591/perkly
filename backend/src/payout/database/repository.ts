@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
-import { DefaultTypeOrmRepository } from '../database/core/typeorm'
+import { DefaultTypeOrmRepository } from '../../database/core/typeorm'
 import { PayoutEntity } from './payout.entity'
 import { ProcessedPageEntity } from './processed-page.entity'
-import { Payout } from './payout'
+import { Payout } from '../payout'
 
 @Injectable()
 export class PayoutRepository extends DefaultTypeOrmRepository<PayoutEntity> {

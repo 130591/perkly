@@ -1,5 +1,5 @@
 import { Column, Entity } from 'typeorm'
-import { DefaultEntity } from '../database/core/base.entity'
+import { DefaultEntity } from '../../database/core/base.entity'
 
 /**
  * Inbox de idempotência do fan-out: uma linha por página de recipients já
