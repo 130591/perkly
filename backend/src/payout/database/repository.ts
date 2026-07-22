@@ -17,11 +17,11 @@ export class PayoutRepository extends DefaultTypeOrmRepository<PayoutEntity> {
     return this.save(
       new PayoutEntity({
         campaignId: payout.campaignId,
+        accountId: payout.accountId,
         recipientName: payout.recipient.name,
         amountCents: payout.recipient.amountCents.toString(),
         channel: payout.recipient.channel,
         status: payout.status,
-        pixKey: payout.pixKey,
         expiresAt: payout.linksExpireAt,
       }),
     )

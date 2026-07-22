@@ -1,24 +1,25 @@
 import { Recipient } from '../campaign/domain/batch'
 
 export type PayoutStatus =
-  | 'pending'    // aguardando resgate
-  | 'claimed'    // usuário informou a chave Pix
-  | 'paid'       // Pix enviado com sucesso
-  | 'failed'     // tentativa de pagamento falhou
-  | 'expired'    // campanha expirou sem resgate
+  | 'pending'     // aguardando resgate
+  | 'processing'  // resgate confirmado (Claim); pagamento em andamento
+  | 'paid'        // Pix enviado com sucesso
+  | 'failed'      // tentativa de pagamento falhou
+  | 'expired'     // prazo do resgate estourou sem confirmação; reserva a liberar no wallet
 
 export type PayoutDraft = {
   campaignId: string
+  accountId: string
   recipient: Recipient
   linksExpireAt: Date
 }
 
 type PayoutProps = {
   campaignId: string
+  accountId: string
   recipient: Recipient
   linksExpireAt: Date
   status: PayoutStatus
-  pixKey?: string
 }
 
 export class Payout {
@@ -47,6 +48,10 @@ export class Payout {
     return this.props.campaignId
   }
 
+  get accountId() {
+    return this.props.accountId
+  }
+
   get recipient(): Recipient {
     return this.props.recipient
   }
@@ -59,42 +64,33 @@ export class Payout {
     return this.props.status
   }
 
-  get pixKey() {
-    return this.props.pixKey
-  }
-
-  claim(pixKey: string, now: Date) {
+  // Chamado quando o Claim confirma o resgate (recebeu a chave Pix) e publica
+  // o evento correspondente. O Payout não guarda a chave — só reage ao fato.
+  startProcessing() {
     this.ensureStatus('pending')
-    this.ensureNotExpired(now)
-    this.props.pixKey = pixKey
-    this.props.status = 'claimed'
+    this.props.status = 'processing'
   }
 
   markPaid() {
-    this.ensureStatus('claimed')
+    this.ensureStatus('processing')
     this.props.status = 'paid'
   }
 
   markFailed() {
-    this.ensureStatus('claimed')
+    this.ensureStatus('processing')
     this.props.status = 'failed'
   }
 
-  expire(now: Date) {
+  // Chamado quando o Claim avisa que o prazo estourou sem resgate — o Claim é
+  // dono do prazo, o Payout só reage liberando a reserva (fora deste método).
+  expire() {
     this.ensureStatus('pending')
-    this.ensureNotExpired(now)
     this.props.status = 'expired'
   }
 
   private ensureStatus(expected: PayoutStatus) {
     if (this.props.status !== expected) {
       throw new Error('invalid status')
-    }
-  }
-
-  private ensureNotExpired(now: Date) {
-    if (this.props.linksExpireAt <= now) {
-      throw new Error('expired')
     }
   }
 }

@@ -1,10 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm'
+import { Column, Entity } from 'typeorm'
 import { DefaultEntity } from '../../database/core/base.entity'
 import { Channel } from '../../campaign/domain/batch'
 
@@ -12,6 +6,9 @@ import { Channel } from '../../campaign/domain/batch'
 export class PayoutEntity extends DefaultEntity<PayoutEntity> {
   @Column({ name: 'campaign_id', type: 'uuid' })
   campaignId: string
+
+  @Column({ name: 'account_id', type: 'uuid' })
+  accountId: string
 
   @Column()
   recipientName: string
@@ -24,12 +21,6 @@ export class PayoutEntity extends DefaultEntity<PayoutEntity> {
 
   @Column()
   status: string
-
-  @Column({ name: 'pix_key', nullable: true })
-  pixKey?: string
-
-  @Column({ name: 'claimed_at', type: 'timestamptz', nullable: true })
-  claimedAt?: Date
 
   @Column({ name: 'paid_at', type: 'timestamptz', nullable: true })
   paidAt?: Date

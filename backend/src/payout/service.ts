@@ -25,6 +25,7 @@ export class PayoutService {
     for (const recipient of request.recipients) {
       const payout = Payout.draft({
         campaignId: request.campaignId,
+        accountId: request.accountId,
         recipient,
         linksExpireAt: request.linksExpireAt,
       })
