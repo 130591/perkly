@@ -3,7 +3,7 @@ import { Transactional } from 'typeorm-transactional'
 import { WalletRepository, ChargeRepository, LedgerRepository } from './database'
 import { PaymentRail, PAYMENT_RAIL } from '../settle/payment-rail'
 import { CashInConfirmed } from '../settle/rail-events'
-import { BalanceReservation, ReserveBalance } from './balance-reservation'
+import { BalanceReservation, ReleaseBalance, ReserveBalance } from './balance-reservation'
 import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
@@ -52,6 +52,19 @@ export class Wallet implements BalanceReservation {
     if (!wallet) throw new NotFoundException('Wallet not found')
     const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
     const transaction = ledger.reserve(input.amountCents)
+    await this.ledgerRepo.append(wallet.id, transaction)
+  }
+
+  /**
+   * Devolve saldo comprometido (reserved → available) para um consumidor
+   * externo (ex.: um payout que expirou sem resgate). Espelha `reserve`.
+   */
+  @Transactional()
+  async release(input: ReleaseBalance): Promise<void> {
+    const wallet = await this.walletRepo.findByAccountId(input.accountId)
+    if (!wallet) throw new NotFoundException('Wallet not found')
+    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
+    const transaction = ledger.expire(input.amountCents)
     await this.ledgerRepo.append(wallet.id, transaction)
   }
 
