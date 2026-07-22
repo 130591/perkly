@@ -12,8 +12,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer'
 
-import { CampaignDraft, TransferType } from '../domain/campaign'
-import { BatchDraft, Recipient, Channel } from '../domain/batch'
+import { CampaignDraft, TransferType } from './domain/campaign'
+import { BatchDraft, Recipient, Channel } from './domain/batch'
 
 export class ChannelDto {
   @IsIn(['email', 'phone'])

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { SqsModule } from '@ssut/nestjs-sqs'
 import { SQSClient } from '@aws-sdk/client-sqs'
-import { CampaignController } from './http/campaign.controller'
+import { CampaignController } from './campaign.controller'
 import { CampaignService } from './service'
 import { CampaignRepository } from './database/repository'
 import { CampaignFanoutWorker } from './messaging/campaign-fanout.worker'
