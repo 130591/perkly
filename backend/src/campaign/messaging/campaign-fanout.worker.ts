@@ -99,6 +99,7 @@ export class CampaignFanoutWorker
         const request: PayoutBatchRequested = {
           pageId: `${batch.externalId}:${start / PAGE_SIZE}`,
           campaignId: campaign.externalId,
+          accountId: campaign.accountId,
           linksExpireAt: batch.linksExpireAt,
           recipients: slice.map(
             (recipient): PayoutRecipient => ({

@@ -18,6 +18,7 @@ export type PayoutBatchRequested = {
   /** `${batchId}:${pageIndex}` — estável, dedupe da página em reentrega. */
   pageId: string
   campaignId: string
+  accountId: string
   linksExpireAt: Date
   recipients: PayoutRecipient[]
 }

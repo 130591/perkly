@@ -16,6 +16,7 @@ export function serializePayoutBatchRequested(
   return JSON.stringify({
     pageId: event.pageId,
     campaignId: event.campaignId,
+    accountId: event.accountId,
     linksExpireAt: event.linksExpireAt.toISOString(),
     recipients: event.recipients.map(recipient => ({
       name: recipient.name,
@@ -30,6 +31,7 @@ export function parsePayoutBatchRequested(body: string): PayoutBatchRequested {
   return {
     pageId: asString(raw, 'pageId'),
     campaignId: asString(raw, 'campaignId'),
+    accountId: asString(raw, 'accountId'),
     linksExpireAt: new Date(asString(raw, 'linksExpireAt')),
     recipients: asArray(raw, 'recipients').map(parseRecipient),
   }
