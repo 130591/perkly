@@ -60,7 +60,7 @@ describe('Ledger — invariantes', () => {
     })
 
     it('aceita transação balanceada de 3 entries', () => {
-        const ledger = new Ledger()
+        const ledger = Ledger.hydrate({ reserved: 5500n })
         expect(() => ledger.settle(5000n, 500n)).not.toThrow()
     })
 
@@ -82,6 +82,14 @@ describe('Ledger — invariantes', () => {
 
         expect(() => ledger.reserve(16500n)).toThrow(
             /would overdraw available funds/,
+        )
+    })
+
+    it('não permite liberar (expire) um valor maior que o reservado', () => {
+        const ledger = Ledger.hydrate({ available: 1000n, reserved: 500n })
+
+        expect(() => ledger.expire(600n)).toThrow(
+            /would overdraw reserved funds/,
         )
     })
 

@@ -39,13 +39,20 @@ export class Transaction {
 export class Ledger {
   private balances = new Map<Account, bigint>()
 
-  private assertSufficientFunds(tx: Transaction): void {
-    const delta = tx.props.entries
-      .filter(e => e.account === 'available')
-      .reduce((s, e) => s + e.value, 0n)
+  // 'external' representa o mundo fora do sistema — é feito pra ir negativo
+  // (dinheiro entrando). 'revenue' ninguém debita ainda. Só available/reserved
+  // têm piso: nenhuma operação pode tirar deles mais do que existe.
+  private static readonly GUARDED_ACCOUNTS: readonly Account[] = ['available', 'reserved']
 
-    if (delta < 0n && this.balanceOf('available') + delta < 0n) {
-      throw new Error(`Transaction ${tx.props.id} would overdraw available funds`)
+  private assertSufficientFunds(tx: Transaction): void {
+    for (const account of Ledger.GUARDED_ACCOUNTS) {
+      const delta = tx.props.entries
+        .filter(e => e.account === account)
+        .reduce((s, e) => s + e.value, 0n)
+
+      if (delta < 0n && this.balanceOf(account) + delta < 0n) {
+        throw new Error(`Transaction ${tx.props.id} would overdraw ${account} funds`)
+      }
     }
   }
 
