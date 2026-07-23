@@ -11,11 +11,15 @@
 export type ReserveBalance = {
   accountId: string
   amountCents: bigint
+  /** Chave de idempotência do chamador — reentrega vira no-op. */
+  idempotencyKey: string
 }
 
 export type ReleaseBalance = {
   accountId: string
   amountCents: bigint
+  /** Chave de idempotência do chamador — reentrega vira no-op. */
+  idempotencyKey: string
 }
 
 export interface BalanceReservation {

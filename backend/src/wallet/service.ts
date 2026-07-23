@@ -45,10 +45,21 @@ export class Wallet implements BalanceReservation {
    * Compromete saldo (available → reserved) para um consumidor externo (ex.: a
    * confirmação de uma campanha). Porta pública `BalanceReservation`: o chamador
    * fala vocabulário de domínio; o ledger e o overdraft-guard ficam aqui dentro.
+   *
+   * Reivindica a chave de idempotência antes de travar a linha (reentrega
+   * retorna rápido, sem esperar lock); o `FOR UPDATE` em
+   * `findByAccountIdForUpdate` serializa concorrentes na mesma conta, fechando
+   * a janela de leitura-e-decide que `loadBalances` sozinho não fecha. Se
+   * `ledger.reserve` lançar por saldo insuficiente, a tx inteira reverte —
+   * inclusive o claim da chave — então uma tentativa recusada pode ser
+   * retentada depois.
    */
   @Transactional()
   async reserve(input: ReserveBalance): Promise<void> {
-    const wallet = await this.walletRepo.findByAccountId(input.accountId)
+    const claimed = await this.walletRepo.claimOperation(input.idempotencyKey)
+    if (!claimed) return
+
+    const wallet = await this.walletRepo.findByAccountIdForUpdate(input.accountId)
     if (!wallet) throw new NotFoundException('Wallet not found')
     const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
     const transaction = ledger.reserve(input.amountCents)
@@ -57,11 +68,15 @@ export class Wallet implements BalanceReservation {
 
   /**
    * Devolve saldo comprometido (reserved → available) para um consumidor
-   * externo (ex.: um payout que expirou sem resgate). Espelha `reserve`.
+   * externo (ex.: um payout que expirou sem resgate). Espelha `reserve`,
+   * mesma proteção de idempotência e lock.
    */
   @Transactional()
   async release(input: ReleaseBalance): Promise<void> {
-    const wallet = await this.walletRepo.findByAccountId(input.accountId)
+    const claimed = await this.walletRepo.claimOperation(input.idempotencyKey)
+    if (!claimed) return
+
+    const wallet = await this.walletRepo.findByAccountIdForUpdate(input.accountId)
     if (!wallet) throw new NotFoundException('Wallet not found')
     const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
     const transaction = ledger.expire(input.amountCents)

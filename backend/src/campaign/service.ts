@@ -11,7 +11,6 @@ import {
 export class CampaignService {
   constructor(
     private readonly repository: CampaignRepository,
-    // Fala com o wallet só pela porta pública, nunca pelo service concreto.
     @Inject(BALANCE_RESERVATION)
     private readonly reservation: BalanceReservation,
   ) {}
@@ -43,6 +42,7 @@ export class CampaignService {
     await this.reservation.reserve({
       accountId: campaign.accountId,
       amountCents: campaign.total(),
+      idempotencyKey: `campaign-confirm:${id}`,
     })
 
     const saved = await this.repository.saveStatuses(entity, campaign)
