@@ -17,7 +17,8 @@ npm run build              # nest build → dist/
 npm run lint               # eslint --fix over {src,apps,libs,test}
 npm run format             # prettier --write
 
-npm test                   # unit tests
+npm test                   # all three tiers: unit → integration → e2e (needs Docker up)
+npm run test:unit          # unit tests only, no DB
 npm run test:integration   # service + real Postgres (Testcontainers)
 npm run test:e2e           # HTTP, full app over real Postgres
 ```
@@ -38,7 +39,7 @@ npx jest --config ./test/jest-integration.json -t "..."   # integration/e2e need
 
 Three suites, distinguished by filename suffix and jest config:
 
-- **Unit** — `*.spec.ts` under `src/` or `test/`; root jest config in `package.json`. No DB.
+- **Unit** — `*.spec.ts` under `src/` or `test/`; root jest config in `package.json`; run via `npm run test:unit`. No DB.
 - **Integration** — `*.integration-spec.ts`; `test/jest-integration.json`; `--runInBand`.
 - **E2E** — `*.e2e-spec.ts`; `test/jest-e2e.json`; `--runInBand`.
 
