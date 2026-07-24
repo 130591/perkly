@@ -67,7 +67,7 @@ describe('Campaign (e2e)', () => {
       .post(`/campaign/${campaignId}/confirm`)
       .expect(201)
 
-    expect(confirmed.body).toEqual({ id: campaignId, status: 'confirmed' })
+    expect(confirmed.body).toEqual({ id: campaignId, status: 'active' })
 
     // O saldo saiu de available para reserved.
     const balances = await e2e
