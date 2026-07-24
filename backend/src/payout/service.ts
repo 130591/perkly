@@ -32,7 +32,12 @@ export class PayoutService {
 
       const saved = await this.repository.create(payout)
       await this.events.publish(
-        new PayoutCreated(saved.externalId, request.campaignId)
+        new PayoutCreated(
+          saved.externalId,
+          request.campaignId,
+          recipient,
+          request.linksExpireAt,
+        ),
       )
     }
   }

@@ -1,16 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { SqsService } from '@ssut/nestjs-sqs'
 import { DomainEventPublisher, PayoutCreated } from './events'
+import { serializePayoutCreated } from './events.codec'
+import { PAYOUT_CREATED_QUEUE } from './queues'
 
 /**
- * Publisher provisório: só loga. Placeholder até o contexto Claim existir e
- * assinar `PayoutCreated` — aí troca por um transporte real (SQS) sem tocar no
- * service, que depende só da porta abstrata `DomainEventPublisher`.
+ * Publica `PayoutCreated` na fila real. Substitui o placeholder de log agora
+ * que o Claim existe e assina `payout-created` — o service continua
+ * dependendo só da porta abstrata `DomainEventPublisher`, então essa troca não
+ * tocou em nada fora deste arquivo e do módulo.
  */
 @Injectable()
-export class LoggingDomainEventPublisher extends DomainEventPublisher {
-  private readonly logger = new Logger(LoggingDomainEventPublisher.name)
+export class SqsDomainEventPublisher extends DomainEventPublisher {
+  private readonly logger = new Logger(SqsDomainEventPublisher.name)
+
+  constructor(private readonly sqs: SqsService) {
+    super()
+  }
 
   async publish(event: PayoutCreated): Promise<void> {
+    await this.sqs.send(PAYOUT_CREATED_QUEUE, {
+      id: event.payoutId,
+      body: serializePayoutCreated(event),
+    })
     this.logger.log(
       `PayoutCreated payout=${event.payoutId} campaign=${event.campaignId}`,
     )
