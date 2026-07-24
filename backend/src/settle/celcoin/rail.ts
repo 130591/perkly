@@ -1,4 +1,4 @@
-import { Charge, ChargeStatus, OpenCharge, PaymentRail } from '../payment-rail'
+import { Charge, ChargeStatus, OpenCharge, OpenPayout, PaymentRail, Transfer } from '../payment-rail'
 import { CelcoinConfig } from '../../config/celcoin.config'
 
 /**
@@ -48,6 +48,13 @@ export class CelcoinPaymentRail implements PaymentRail {
     })) as CelcoinBrcodeResponse
 
     return this.normalizeCharge(res, input, expiration)
+  }
+
+  // TODO: cash-out real (POST /baas/v2/pix/payment, docs/integration.md §4.2) -
+  // exige resolução DICT antes (§4.1) e o mapeamento do code (SUCCESS/
+  // ALREADY_PAID/...). Fora de escopo enquanto o Payout usa só o Psp mock.
+  async pay(_input: OpenPayout): Promise<Transfer> {
+    throw new Error('CelcoinPaymentRail.pay is not implemented yet')
   }
 
   // —— normalize (outward): resposta Celcoin → Charge de domínio ————————————————

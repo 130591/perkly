@@ -5,8 +5,10 @@
  * consome via o token `PAYMENT_RAIL`, nunca o concreto — é isso que sustenta
  * "Wallet não conhece o PSP".
  *
- * Cobre só `charge` (cash-in) por ora. `pay` (cash-out / payout) entra quando o
- * contexto Payout existir — declarar agora forçaria todo implementador a stubá-lo.
+ * `pay` (cash-out) é o análogo outbound de `charge` (cash-in): inicia a
+ * transferência (`POST /baas/v2/pix/payment`, docs/integration.md §4.2) e
+ * devolve `status: 'pending'` — a confirmação de verdade chega depois pelo
+ * webhook `pix-payment-out`, nunca na resposta desta chamada.
  */
 
 export type ChargeStatus = 'pending' | 'paid' | 'expired' | 'failed'
@@ -34,9 +36,26 @@ export type OpenCharge = {
   expiresInSeconds?: number
 }
 
+export type TransferStatus = 'pending' | 'confirmed' | 'failed'
+
+export type Transfer = {
+  id: string
+  amountCents: bigint
+  status: TransferStatus
+}
+
+/** Entrada do cash-out — só vocabulário de domínio, zero Celcoin/DICT. */
+export type OpenPayout = {
+  amountCents: bigint
+  /** Chave Pix do recipient (já resolvida pelo Claim, sem DICT nesta fatia). */
+  pixKey: string
+  /** Âncora de idempotência/conciliação do domínio (→ `clientCode` no adapter). */
+  reference: string
+}
+
 export interface PaymentRail {
   charge(input: OpenCharge): Promise<Charge>
-  // pay(payout: OpenPayout): Promise<Payout>  — cash-out, contexto Payout (depois)
+  pay(input: OpenPayout): Promise<Transfer>
 }
 
 /** Token de DI — a interface some em runtime, então injetamos por token. */
