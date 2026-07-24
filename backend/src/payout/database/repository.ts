@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../../database/core/typeorm'
 import { PayoutEntity } from './payout.entity'
 import { ProcessedPageEntity } from './processed-page.entity'
-import { Payout } from '../payout'
+import { Payout, PayoutStatus } from '../payout'
 
 @Injectable()
 export class PayoutRepository extends DefaultTypeOrmRepository<PayoutEntity> {
@@ -45,5 +45,41 @@ export class PayoutRepository extends DefaultTypeOrmRepository<PayoutEntity> {
       .returning('page_id')
       .execute()
     return result.raw.length > 0
+  }
+
+  /**
+   * Busca por `externalId` travando a linha (`FOR UPDATE`, sem skip) — usada
+   * pela confirmação de pagamento (webhook reentrega, precisa serializar
+   * contra a mesma linha). Mesmo padrão de
+   * `ClaimRepository.findByExternalIdForUpdate`.
+   */
+  findByExternalIdForUpdate(externalId: string): Promise<PayoutEntity | null> {
+    return this.findOne({
+      where: { externalId },
+      lock: { mode: 'pessimistic_write' },
+    })
+  }
+
+  /** Persiste a transição de status (e a chave Pix, se veio de `startProcessing`). */
+  saveStatus(entity: PayoutEntity, payout: Payout): Promise<PayoutEntity> {
+    entity.status = payout.status
+    entity.pixKey = payout.pixKey
+    if (payout.status === 'paid') entity.paidAt = new Date()
+    return this.save(entity)
+  }
+
+  toDomain(entity: PayoutEntity): Payout {
+    return Payout.hydrate({
+      campaignId: entity.campaignId,
+      accountId: entity.accountId,
+      recipient: {
+        name: entity.recipientName,
+        amountCents: BigInt(entity.amountCents),
+        channel: entity.channel,
+      },
+      linksExpireAt: entity.expiresAt,
+      status: entity.status as PayoutStatus,
+      pixKey: entity.pixKey,
+    })
   }
 }

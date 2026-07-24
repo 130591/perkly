@@ -27,4 +27,7 @@ export class PayoutEntity extends DefaultEntity<PayoutEntity> {
 
   @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt: Date
+
+  @Column({ name: 'pix_key', type: 'text', nullable: true })
+  pixKey?: string
 }

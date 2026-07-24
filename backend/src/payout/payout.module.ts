@@ -1,59 +1,41 @@
 import { Module } from '@nestjs/common'
-import { SqsModule } from '@ssut/nestjs-sqs'
-import { SQSClient } from '@aws-sdk/client-sqs'
 import { PayoutService } from './service'
 import { PayoutRepository } from './database/repository'
-import { CreatePayoutConsumer } from './messaging/create-payouts.consumer'
+import { CreatePayoutConsumer } from './messaging/consumers/create-payouts.consumer'
+import { ClaimConfirmedConsumer } from './messaging/consumers/claim-confirmed.consumer'
+import { ClaimExpiredConsumer } from './messaging/consumers/claim-expired.consumer'
+import { PayoutConfirmedConsumer } from './messaging/consumers/payout-confirmed.consumer'
 import { DomainEventPublisher } from './messaging/events'
 import { SqsDomainEventPublisher } from './messaging/event-publisher'
-import { PAYOUT_CREATED_QUEUE } from './messaging/queues'
-import { PAYOUT_BATCH_QUEUE } from '../campaign/messaging/queues'
-import { ConfigService } from '../config/service'
-import { queueUrl } from '../config/sqs.config'
+import { WalletModule } from '../wallet/wallet.module'
+import { SettleModule } from '../settle/settle.module'
 
 /**
  * Consome `payout-batch-requested` (páginas publicadas pelo fan-out do campaign)
  * e cria os payouts. Produz `payout-created` (o Claim assina) via
- * `DomainEventPublisher`/`SqsDomainEventPublisher` — consumer e producer na
- * mesma instância de `SqsModule`, igual settle faz para cash-in (webhook
- * produz, wallet consome). Em `test` não ligamos o poller do consumer.
+ * `DomainEventPublisher`/`SqsDomainEventPublisher`.
+ *
+ * Também consome `claim-confirmed`/`claim-expired` (o Claim é quem produz) e
+ * `payout-confirmed` (o settle é quem produz, a partir do webhook
+ * `pix-payment-out`) — é o Payout reagindo ao resgate e ao PSP: processa
+ * (aciona o PSP via `PAYMENT_RAIL`, porta do settle), libera a reserva ou
+ * conclui a liquidação (via `BALANCE_RESERVATION`, porta do wallet). Por isso
+ * importa os dois módulos pela API pública deles, nunca pelo concreto.
+ *
+ * `SqsService` e as filas (producers/consumers, incl. o desligamento do
+ * poller em `test`) vêm do registro único e global em
+ * `broker/sqs.module.ts` — ver o comentário lá sobre por que registrar
+ * `SqsModule` aqui de novo quebraria a entrega de mensagens silenciosamente.
  */
 @Module({
-  imports: [
-    SqsModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const sqs = config.get('sqs')
-        const client = new SQSClient({
-          endpoint: sqs.endpoint,
-          region: sqs.region,
-          credentials: {
-            accessKeyId: sqs.accessKeyId,
-            secretAccessKey: sqs.secretAccessKey,
-          },
-        })
-        const consumer = {
-          name: PAYOUT_BATCH_QUEUE,
-          queueUrl: queueUrl(sqs, PAYOUT_BATCH_QUEUE),
-          sqs: client,
-        }
-        return {
-          consumers: config.get('env') === 'test' ? [] : [consumer],
-          producers: [
-            {
-              name: PAYOUT_CREATED_QUEUE,
-              queueUrl: queueUrl(sqs, PAYOUT_CREATED_QUEUE),
-              sqs: client,
-            },
-          ],
-        }
-      },
-    }),
-  ],
+  imports: [WalletModule, SettleModule],
   providers: [
     PayoutService,
     PayoutRepository,
     CreatePayoutConsumer,
+    ClaimConfirmedConsumer,
+    ClaimExpiredConsumer,
+    PayoutConfirmedConsumer,
     { provide: DomainEventPublisher, useClass: SqsDomainEventPublisher },
   ],
 })

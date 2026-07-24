@@ -20,6 +20,7 @@ type PayoutProps = {
   recipient: Recipient
   linksExpireAt: Date
   status: PayoutStatus
+  pixKey?: string
 }
 
 export class Payout {
@@ -64,10 +65,15 @@ export class Payout {
     return this.props.status
   }
 
-  // Chamado quando o Claim confirma o resgate (recebeu a chave Pix) e publica
-  // o evento correspondente. O Payout não guarda a chave — só reage ao fato.
-  startProcessing() {
+  get pixKey() {
+    return this.props.pixKey
+  }
+
+  // Chamado quando o Claim confirma o resgate — guarda a chave Pix recebida
+  // (é pra onde o cash-out manda o dinheiro) e entra em processamento.
+  startProcessing(pixKey: string) {
     this.ensureStatus('pending')
+    this.props.pixKey = pixKey
     this.props.status = 'processing'
   }
 
