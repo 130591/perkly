@@ -1,5 +1,5 @@
 import { Column, Entity } from 'typeorm'
-import { DefaultEntity } from '../../database/core/base.entity'
+import { DefaultEntity } from '../../shared/database/core/base.entity'
 import { Channel } from '../../campaign/domain/batch'
 
 @Entity('payout')

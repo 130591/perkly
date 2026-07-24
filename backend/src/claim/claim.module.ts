@@ -13,7 +13,7 @@ import { SqsClaimEventPublisher } from './messaging/event-publisher'
  * `SqsClaimEventPublisher`. Em `test` não ligamos o poller nem o worker de
  * expiração; ambos são exercidos por teste dedicado chamando `drain()`/
  * `handle()` direto. `SqsService` vem do registro único e global em
- * `broker/sqs.module.ts` (ver o comentário lá — registrar `SqsModule` aqui
+ * `shared/broker/sqs.module.ts` (ver o comentário lá — registrar `SqsModule` aqui
  * de novo quebraria isso).
  */
 @Module({

@@ -14,7 +14,7 @@ import { WalletModule } from '../wallet/wallet.module'
   // pagina a campanha e publica; o payout consome no módulo dele). Não consome
   // fila nenhuma — o gatilho do fan-out é a varredura do estado da campanha
   // (`status='active' AND fanned_out_at IS NULL`), não um evento (RFC 0002).
-  // `SqsService` vem do registro único e global em `broker/sqs.module.ts`
+  // `SqsService` vem do registro único e global em `shared/broker/sqs.module.ts`
   // (ver o comentário lá — registrar `SqsModule` aqui de novo quebraria isso).
   imports: [WalletModule],
   controllers: [CampaignController],

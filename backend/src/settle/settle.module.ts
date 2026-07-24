@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { ConfigService } from '../config/service'
+import { ConfigService } from '../shared/config/service'
 import { Psp } from './psp'
 import { CelcoinPaymentRail } from './celcoin/rail'
 import { PAYMENT_RAIL } from './payment-rail'
@@ -19,7 +19,7 @@ import { WebhookGuard } from './celcoin/webhook.guard'
  *   payout (`PayoutConfirmed`).
  *
  * `SqsService` e as filas (`cash-in`/`payout-confirmed`) vêm do registro
- * único e global em `broker/sqs.module.ts` — ver o comentário lá sobre por
+ * único e global em `shared/broker/sqs.module.ts` — ver o comentário lá sobre por
  * que registrar `SqsModule` aqui de novo quebraria a entrega de mensagens
  * silenciosamente.
  */

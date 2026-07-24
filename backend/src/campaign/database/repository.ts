@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
-import { DefaultTypeOrmRepository } from '../../database/core/typeorm'
+import { DefaultTypeOrmRepository } from '../../shared/database/core/typeorm'
 import { CampaignEntity, BatchEntity } from './campaign.entity'
 import { Campaign, CampaignStatus, TransferType } from '../domain/campaign'
 import { Batch } from '../domain/batch'

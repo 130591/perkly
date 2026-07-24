@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
-import { DefaultTypeOrmRepository } from '../../database/core/typeorm'
+import { DefaultTypeOrmRepository } from '../../shared/database/core/typeorm'
 import { ClaimEntity } from './claim.entity'
 import { Claim, ClaimStatus } from '../claim'
 import { PayoutCreated } from '../../payout/messaging/events'

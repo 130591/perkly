@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm'
-import { DefaultEntity } from '../../../database/core/base.entity'
+import { DefaultEntity } from '../../../shared/database/core/base.entity'
 import { AccountEntity } from './account.entity'
 
 /**

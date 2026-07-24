@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { addTransactionalDataSource } from 'typeorm-transactional'
-import { ConfigModule } from './config/config.module'
-import { ConfigService } from './config/service'
-import { MessagingModule } from './broker/sqs.module'
+import { ConfigModule } from './shared/config/config.module'
+import { ConfigService } from './shared/config/service'
+import { MessagingModule } from './shared/broker/sqs.module'
 import { WalletModule } from './wallet/wallet.module'
 import { SettleModule } from './settle/settle.module'
 import { CampaignModule } from './campaign/campaign.module'
@@ -15,8 +15,8 @@ import { ClaimModule } from './claim/claim.module'
   imports: [
     ConfigModule.forRoot(),
     // Registro único e global do SqsModule — ver o comentário em
-    // broker/sqs.module.ts sobre por que isso NÃO pode ser espalhado por
-    // módulo de domínio.
+    // shared/broker/sqs.module.ts sobre por que isso NÃO pode ser espalhado
+    // por módulo de domínio.
     MessagingModule,
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

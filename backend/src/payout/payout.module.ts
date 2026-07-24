@@ -24,7 +24,7 @@ import { SettleModule } from '../settle/settle.module'
  *
  * `SqsService` e as filas (producers/consumers, incl. o desligamento do
  * poller em `test`) vêm do registro único e global em
- * `broker/sqs.module.ts` — ver o comentário lá sobre por que registrar
+ * `shared/broker/sqs.module.ts` — ver o comentário lá sobre por que registrar
  * `SqsModule` aqui de novo quebraria a entrega de mensagens silenciosamente.
  */
 @Module({

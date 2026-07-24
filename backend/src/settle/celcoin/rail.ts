@@ -1,5 +1,5 @@
 import { Charge, ChargeStatus, OpenCharge, OpenPayout, PaymentRail, Transfer } from '../payment-rail'
-import { CelcoinConfig } from '../../config/celcoin.config'
+import { CelcoinConfig } from '../../shared/config/celcoin.config'
 
 /**
  * CelcoinPaymentRail — implementação real da porta `PaymentRail` sobre a linha

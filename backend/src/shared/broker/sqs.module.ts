@@ -3,10 +3,10 @@ import { SqsModule } from '@ssut/nestjs-sqs'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { ConfigService } from '../config/service'
 import { queueUrl } from '../config/sqs.config'
-import { PAYOUT_BATCH_QUEUE } from '../campaign/messaging/queues'
-import { PAYOUT_CREATED_QUEUE } from '../payout/messaging/queues'
-import { CLAIM_CONFIRMED_QUEUE, CLAIM_EXPIRED_QUEUE } from '../claim/messaging/queues'
-import { CASH_IN_QUEUE, PAYOUT_CONFIRMED_QUEUE } from '../settle/queues'
+import { PAYOUT_BATCH_QUEUE } from '../../campaign/messaging/queues'
+import { PAYOUT_CREATED_QUEUE } from '../../payout/messaging/queues'
+import { CLAIM_CONFIRMED_QUEUE, CLAIM_EXPIRED_QUEUE } from '../../claim/messaging/queues'
+import { CASH_IN_QUEUE, PAYOUT_CONFIRMED_QUEUE } from '../../settle/queues'
 
 const QUEUES = [
   PAYOUT_BATCH_QUEUE,

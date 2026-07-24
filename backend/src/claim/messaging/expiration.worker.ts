@@ -5,7 +5,7 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common'
 import { ClaimService } from '../service'
-import { ConfigService } from '../../config/service'
+import { ConfigService } from '../../shared/config/service'
 
 /** Intervalo da varredura. Mesmo valor do fan-out de campanha (RFC 0002). */
 const SCAN_INTERVAL_MS = 15_000

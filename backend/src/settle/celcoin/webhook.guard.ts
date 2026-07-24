@@ -4,7 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { ConfigService } from '../../config/service'
+import { ConfigService } from '../../shared/config/service'
 
 /**
  * WebhookGuard — decide só "passa ou 401", nada mais.
