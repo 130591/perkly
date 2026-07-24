@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
-import { SqsService } from '@ssut/nestjs-sqs'
+import { useSqs } from '../wallet/sqs'
 import { useIntegrationApp } from '../wallet/setup'
 import { CampaignFanoutWorker } from '../../src/campaign/messaging/campaign-fanout.worker'
 import { CampaignRepository } from '../../src/campaign/database/repository'
@@ -47,28 +47,17 @@ const recipients = (n: number) =>
   Array.from({ length: n }, (_, i) => ({ name: `r${i}`, amountCents: '1000' }))
 
 describe('CampaignFanoutWorker', () => {
+  // Registrado ANTES de `useIntegrationApp()`: o endpoint do ElasticMQ real
+  // precisa estar em `process.env.SQS_ENDPOINT` antes do Nest compilar o
+  // AppModule (beforeAll roda na ordem de registro).
+  const sqs = useSqs()
   const ctx = useIntegrationApp()
-
-  // Não há ElasticMQ no teste de integração (só Postgres via Testcontainers).
-  // O foco é o gatilho por varredura + a marca `fanned_out_at`, não o transporte:
-  // interceptamos o envio e inspecionamos os payloads.
-  let sendSpy: jest.SpyInstance
-
-  beforeEach(() => {
-    sendSpy = jest
-      .spyOn(SqsService.prototype, 'send')
-      .mockResolvedValue(undefined as never)
-  })
-
-  afterEach(() => jest.restoreAllMocks())
 
   const reload = (ds: DataSource, id: number) =>
     ds.getRepository(CampaignEntity).findOneByOrFail({ id })
 
-  // O 2º arg de `send` é `Message | Message[]`; aqui é sempre a mensagem única
-  // que o worker envia. Decodifica o body pro evento tipado.
-  const pageOf = (call: unknown[]) =>
-    parsePayoutBatchRequested((call[1] as { body: string }).body)
+  const pagesOf = async () =>
+    (await sqs.receive(PAYOUT_BATCH_QUEUE)).map(parsePayoutBatchRequested)
 
   it('pagina a campanha ativa e marca fanned_out_at', async () => {
     const worker = ctx.get(CampaignFanoutWorker)
@@ -79,12 +68,11 @@ describe('CampaignFanoutWorker', () => {
     await worker.drain()
 
     // uma página publicada, na fila de payout, com os 3 recipients
-    expect(sendSpy).toHaveBeenCalledTimes(1)
-    expect(sendSpy.mock.calls[0][0]).toBe(PAYOUT_BATCH_QUEUE)
-    const page = pageOf(sendSpy.mock.calls[0])
-    expect(page.campaignId).toBe(campaign.externalId)
-    expect(page.pageId).toBe(`${campaign.batches[0].externalId}:0`)
-    expect(page.recipients).toHaveLength(3)
+    const pages = await pagesOf()
+    expect(pages).toHaveLength(1)
+    expect(pages[0].campaignId).toBe(campaign.externalId)
+    expect(pages[0].pageId).toBe(`${campaign.batches[0].externalId}:0`)
+    expect(pages[0].recipients).toHaveLength(3)
 
     // a linha deixou de ser candidata: fan-out concluído
     const persisted = await reload(ctx.ds, campaign.id)
@@ -100,8 +88,8 @@ describe('CampaignFanoutWorker', () => {
 
     await worker.drain()
 
-    expect(sendSpy).toHaveBeenCalledTimes(2)
-    const pageIds = sendSpy.mock.calls.map((call) => pageOf(call).pageId).sort()
+    const pages = await pagesOf()
+    const pageIds = pages.map((page) => page.pageId).sort()
     const expected = campaign.batches.map((b) => `${b.externalId}:0`).sort()
     expect(pageIds).toEqual(expected)
   })
@@ -111,11 +99,10 @@ describe('CampaignFanoutWorker', () => {
     await seedActiveCampaign(ctx.ds, [{ recipients: recipients(2) }])
 
     await worker.drain()
-    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(await pagesOf()).toHaveLength(1)
 
-    sendSpy.mockClear()
     await worker.drain()
-    expect(sendSpy).not.toHaveBeenCalled()
+    expect(await pagesOf()).toHaveLength(0)
   })
 
   it('ignora campanhas em draft (só ativa entra na varredura)', async () => {
@@ -129,7 +116,7 @@ describe('CampaignFanoutWorker', () => {
 
     await worker.drain()
 
-    expect(sendSpy).not.toHaveBeenCalled()
+    expect(await pagesOf()).toHaveLength(0)
   })
 
   it('crash-safety: falha ao marcar → rollback → campanha reprocessada, não zumbi', async () => {
@@ -148,7 +135,8 @@ describe('CampaignFanoutWorker', () => {
     await expect(worker.dispatchNext()).rejects.toThrow('db down')
 
     // a página foi enviada, mas a marca NÃO foi persistida (rollback)
-    expect(sendSpy).toHaveBeenCalledTimes(1)
+    const firstAttempt = await pagesOf()
+    expect(firstAttempt).toHaveLength(1)
     expect((await reload(ctx.ds, campaign.id)).fannedOutAt).toBeNull()
 
     // markFannedOut volta ao normal (mockRejectedValueOnce só pega a 1ª); a
@@ -156,11 +144,10 @@ describe('CampaignFanoutWorker', () => {
     // por pageId no payout) — a campanha nunca fica encalhada.
     await worker.drain()
 
+    const secondAttempt = await pagesOf()
     expect(markSpy).toHaveBeenCalledTimes(2)
-    expect(sendSpy).toHaveBeenCalledTimes(2)
-    expect(pageOf(sendSpy.mock.calls[1]).pageId).toBe(
-      pageOf(sendSpy.mock.calls[0]).pageId,
-    )
+    expect(secondAttempt).toHaveLength(1)
+    expect(secondAttempt[0].pageId).toBe(firstAttempt[0].pageId)
     expect((await reload(ctx.ds, campaign.id)).fannedOutAt).not.toBeNull()
   })
 })
