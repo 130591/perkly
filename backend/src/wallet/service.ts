@@ -3,7 +3,7 @@ import { Transactional } from 'typeorm-transactional'
 import { WalletRepository, ChargeRepository, LedgerRepository } from './database'
 import { PaymentRail, PAYMENT_RAIL } from '../settle/payment-rail'
 import { CashInConfirmed } from '../settle/rail-events'
-import { BalanceReservation, ReleaseBalance, ReserveBalance } from './balance-reservation'
+import { BalanceReservation, ReleaseBalance, ReserveBalance, SettleBalance } from './balance-reservation'
 import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
@@ -80,6 +80,24 @@ export class Wallet implements BalanceReservation {
     if (!wallet) throw new NotFoundException('Wallet not found')
     const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
     const transaction = ledger.expire(input.amountCents)
+    await this.ledgerRepo.append(wallet.id, transaction)
+  }
+
+  /**
+   * Consome saldo comprometido de vez (reserved → external + revenue) para um
+   * consumidor externo (ex.: o payout, quando o PSP confirma o Pix ao
+   * recipient). Espelha `reserve`/`release`, mesma proteção de idempotência e
+   * lock.
+   */
+  @Transactional()
+  async settle(input: SettleBalance): Promise<void> {
+    const claimed = await this.walletRepo.claimOperation(input.idempotencyKey)
+    if (!claimed) return
+
+    const wallet = await this.walletRepo.findByAccountIdForUpdate(input.accountId)
+    if (!wallet) throw new NotFoundException('Wallet not found')
+    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
+    const transaction = ledger.settle(input.amountCents, input.fee)
     await this.ledgerRepo.append(wallet.id, transaction)
   }
 
