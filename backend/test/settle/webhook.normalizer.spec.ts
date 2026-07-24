@@ -1,4 +1,9 @@
-import { normalizeCashIn, CelcoinPixIn } from '../../src/settle/celcoin/webhook.normalizer'
+import {
+  normalizeCashIn,
+  normalizePayoutConfirmed,
+  CelcoinPixIn,
+  CelcoinPixOut,
+} from '../../src/settle/celcoin/webhook.normalizer'
 
 describe('normalizeCashIn', () => {
   const entity = (over: Partial<{ status: string; amount: number }> = {}): CelcoinPixIn => ({
@@ -56,5 +61,55 @@ describe('normalizeCashIn', () => {
     const payload = entity()
     delete (payload as any).body.clientRequestId
     expect(() => normalizeCashIn(payload)).toThrow(/correlation anchor/)
+  })
+})
+
+describe('normalizePayoutConfirmed', () => {
+  const entity = (over: Partial<{ status: string }> = {}): CelcoinPixOut => ({
+    entity: 'pix-payment-out',
+    createTimestamp: '2026-06-16T09:12:00.000+00:00',
+    status: over.status ?? 'CONFIRMED',
+    body: {
+      endToEndId: 'E1393589320230727130301498341234',
+      clientCode: 'payout-camp1-recipient42-uuid',
+    },
+  })
+
+  it('normaliza o formato novo (entity) para PayoutConfirmed', () => {
+    expect(normalizePayoutConfirmed(entity())).toEqual({
+      reference: 'payout-camp1-recipient42-uuid',
+      endToEndId: 'E1393589320230727130301498341234',
+      confirmedAt: new Date('2026-06-16T09:12:00.000+00:00'),
+    })
+  })
+
+  it('normaliza o formato legado (RequestBody) para PayoutConfirmed', () => {
+    const legacy: CelcoinPixOut = {
+      RequestBody: {
+        TransactionType: 'PAYMENT',
+        ClientCode: 'payout-camp1-recipient42-uuid',
+        EndToEndId: 'E1393589320230727130301498341234',
+        StatusCode: { Description: 'confirmed', StatusId: 2 },
+      },
+    }
+    const result = normalizePayoutConfirmed(legacy)
+    expect(result.reference).toBe('payout-camp1-recipient42-uuid')
+    expect(result.endToEndId).toBe('E1393589320230727130301498341234')
+  })
+
+  it('lança quando o pix-payment-out não está confirmado (formato novo)', () => {
+    expect(() => normalizePayoutConfirmed(entity({ status: 'ERROR' }))).toThrow(/not confirmed/)
+  })
+
+  it('lança quando o pix-payment-out não está confirmado (formato legado)', () => {
+    const legacy: CelcoinPixOut = {
+      RequestBody: {
+        TransactionType: 'PAYMENT',
+        ClientCode: 'payout-camp1-recipient42-uuid',
+        EndToEndId: 'E1393589320230727130301498341234',
+        StatusCode: { Description: 'error', StatusId: 3 },
+      },
+    }
+    expect(() => normalizePayoutConfirmed(legacy)).toThrow(/not confirmed/)
   })
 })
