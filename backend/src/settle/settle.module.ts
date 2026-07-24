@@ -1,54 +1,29 @@
 import { Module } from '@nestjs/common'
-import { SqsModule } from '@ssut/nestjs-sqs'
-import { SQSClient } from '@aws-sdk/client-sqs'
 import { ConfigService } from '../config/service'
-import { queueUrl } from '../config/sqs.config'
 import { Psp } from './psp'
 import { CelcoinPaymentRail } from './celcoin/rail'
 import { PAYMENT_RAIL } from './payment-rail'
 import { CelcoinWebhookController } from './celcoin/webhook.controller'
 import { WebhookGuard } from './celcoin/webhook.guard'
-import { CASH_IN_QUEUE } from './queues'
 
 /**
  * Contexto da camada FÍSICA de dinheiro (entrada/saída real via PSP). Self-
  * contained: publica sua API pública (`PaymentRail` / token `PAYMENT_RAIL`) e
- * seus eventos (`CashInConfirmed`), e encapsula o provider (Celcoin, trocável).
- * NÃO conhece o wallet — quem depende é o wallet (injeta a rail, assina o evento).
+ * seus eventos (`RailEvent = CashInConfirmed | PayoutConfirmed`), e encapsula
+ * o provider (Celcoin, trocável). NÃO conhece o wallet nem o payout — quem
+ * depende é quem assina o evento (injeta a rail ou consome a fila).
  *
  * - Outbound: provê `PAYMENT_RAIL` (Celcoin real se houver credencial, senão Psp).
- * - Inbound: recebe o webhook, normaliza e PUBLICA `CashInConfirmed` na fila. O
- *   consumidor mora no wallet (o assinante); aqui só registramos o transporte SQS
- *   — o poller casa com o handler decorado lá via descoberta app-wide.
+ * - Inbound: recebe os dois webhooks, normaliza e PUBLICA o evento na fila
+ *   correspondente. Os consumidores moram no wallet (`CashInConfirmed`) e no
+ *   payout (`PayoutConfirmed`).
+ *
+ * `SqsService` e as filas (`cash-in`/`payout-confirmed`) vêm do registro
+ * único e global em `broker/sqs.module.ts` — ver o comentário lá sobre por
+ * que registrar `SqsModule` aqui de novo quebraria a entrega de mensagens
+ * silenciosamente.
  */
 @Module({
-  imports: [
-    SqsModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const sqs = config.get('sqs')
-        const client = new SQSClient({
-          endpoint: sqs.endpoint,
-          region: sqs.region,
-          credentials: {
-            accessKeyId: sqs.accessKeyId,
-            secretAccessKey: sqs.secretAccessKey,
-          },
-        })
-        const url = queueUrl(sqs, CASH_IN_QUEUE)
-        return {
-          producers: [{ name: CASH_IN_QUEUE, queueUrl: url, sqs: client }],
-          // Em `test` NÃO ligamos o polling: o harness boota o AppModule inteiro e
-          // um poller de fundo puxaria fila (open handles, ruído em CI). O fluxo é
-          // exercido por teste dedicado.
-          consumers:
-            config.get('env') === 'test'
-              ? []
-              : [{ name: CASH_IN_QUEUE, queueUrl: url, sqs: client }],
-        }
-      },
-    }),
-  ],
   controllers: [CelcoinWebhookController],
   providers: [
     WebhookGuard,

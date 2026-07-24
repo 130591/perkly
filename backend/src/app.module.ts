@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm'
 import { addTransactionalDataSource } from 'typeorm-transactional'
 import { ConfigModule } from './config/config.module'
 import { ConfigService } from './config/service'
+import { MessagingModule } from './broker/sqs.module'
 import { WalletModule } from './wallet/wallet.module'
 import { SettleModule } from './settle/settle.module'
 import { CampaignModule } from './campaign/campaign.module'
@@ -13,6 +14,10 @@ import { ClaimModule } from './claim/claim.module'
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    // Registro único e global do SqsModule — ver o comentário em
+    // broker/sqs.module.ts sobre por que isso NÃO pode ser espalhado por
+    // módulo de domínio.
+    MessagingModule,
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {

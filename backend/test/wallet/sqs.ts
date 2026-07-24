@@ -77,7 +77,7 @@ export function useSqs(): SqsContext {
 
   afterAll(async () => {
     await container?.stop()
-  })
+  }, 120_000)
 
   return ctx
 }

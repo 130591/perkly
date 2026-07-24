@@ -74,7 +74,7 @@ export function useIntegrationApp(): IntegrationContext {
   afterAll(async () => {
     await ctx.app?.close()
     await container?.stop()
-  })
+  }, 120_000)
 
   return ctx
 }
