@@ -8,6 +8,7 @@ import { WalletModule } from './wallet/wallet.module'
 import { SettleModule } from './settle/settle.module'
 import { CampaignModule } from './campaign/campaign.module'
 import { PayoutModule } from './payout/payout.module'
+import { ClaimModule } from './claim/claim.module'
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PayoutModule } from './payout/payout.module'
     SettleModule,
     CampaignModule,
     PayoutModule,
+    ClaimModule,
   ],
   controllers: [],
   providers: [],
