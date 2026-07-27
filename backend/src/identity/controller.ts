@@ -7,9 +7,14 @@ import { BackofficeGuard } from './backoffice.guard'
 export class Authentication {
   constructor(private readonly service: Service) {}
 
-	@Post('backoffice/tenants')
-	@UseGuards(BackofficeGuard)
-	async newTenant(@Body() body: NewTenantBody) {
-		return this.service.createTenant(body)
-	}
+  @Post('backoffice/tenants')
+  @UseGuards(BackofficeGuard)
+  async newTenant(@Body() body: NewTenantBody) {
+    return this.service.createTenant(body)
+  }
+
+  @Post('activate')
+  async activeUserAdmin(@Body() body: any) {
+    await this.service.activeAdmin(body)
+  }
 }

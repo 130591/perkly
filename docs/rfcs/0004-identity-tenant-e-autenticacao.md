@@ -405,6 +405,52 @@ ao custo de UI ter que tolerar `name` vazio para o primeiro admin até a
 pessoa preencher o próprio nome — funcionalidade de perfil que **não existe**
 nesta RFC, fica como dívida nomeada.
 
+### 15. Senha do usuário é hasheada com Argon2id, não bcrypt nem `crypto.scrypt` na mão
+
+`user.passwordHash` é gerado com `argon2.hash()` (biblioteca `argon2`, variante
+`argon2id` por padrão). Token de ativação/convite/reset continuam usando
+`Token.hash` (SHA-256, Decisão 7) — são coisas diferentes: token é um
+segredo aleatório de alta entropia gerado pelo sistema (SHA-256 simples já
+basta, ninguém precisa adivinhar); senha é escolhida por humano, baixa
+entropia, e precisa resistir a tentativa de força bruta offline caso o hash
+vaze.
+
+**Por quê Argon2id:** venceu a Password Hashing Competition (2015) e é a
+recomendação nº 1 da OWASP hoje para hash de senha, à frente de bcrypt. A
+vantagem prática: bcrypt só tem um fator de custo (tempo de CPU), então um
+atacante com GPU/ASIC paraleliza tentativas à vontade — cada tentativa é
+barata em hardware dedicado. Argon2 é **memory-hard**: o custo (tempo,
+memória, paralelismo) é configurável, e a exigência de memória por tentativa
+é o que encarece paralelizar em GPU (memória cara/limitada em massa, ao
+contrário de ciclos de CPU). `argon2id` especificamente é o híbrido
+recomendado — resiste tanto a ataque de canal lateral (como `argon2i`)
+quanto a cracking por GPU (como `argon2d`).
+
+**Alternativa rejeitada (`crypto.scrypt` nativo do Node, sem dependência
+nova):** tecnicamente também memory-hard e já disponível sem instalar nada,
+mas exige implementar à mão geração de salt, formato de armazenamento
+(algoritmo+parâmetros+salt+hash como uma string só) e comparação em tempo
+constante — exatamente o tipo de coisa que uma biblioteca madura acerta e
+reimplementação improvisada erra. Diferente do regex de CNPJ/telefone (Decisão
+sem número própria, mas mesma lógica: "não vale a pena uma lib pra isso"),
+aqui o risco de um erro sutil (salt reusado, comparação vulnerável a timing
+attack) é alto o suficiente pra preferir a biblioteca.
+
+**Alternativa rejeitada (`bcryptjs`, pure JS, sem binário nativo):** instalaria
+sem fricção nenhuma — o custo real do Argon2 apareceu aqui: `argon2` tem
+binário nativo compilado por plataforma, e o ambiente de desenvolvimento
+(Windows com o projeto montado via `\\wsl.localhost`) tornou a instalação não-trivial
+(precisou mapear drive letter pra `cmd.exe` aceitar o diretório como
+`cwd`). Aceito mesmo assim: é custo de **setup**, pago uma vez por
+desenvolvedor/CI; bcrypt trocaria isso por uma fraqueza de **produção**
+permanente (só custo de CPU, sem custo de memória) que não se resolve depois
+sem re-hashear a base toda.
+
+**Troca:** barateia a segurança de senha desde o início (resistente a
+GPU/ASIC, parâmetros de custo ajustáveis conforme hardware de produção
+crescer) ao custo de uma dependência com binário nativo — que já se provou
+fricção real neste ambiente de dev, mas é dívida de setup, não de segurança.
+
 ---
 
 ## Em aberto
