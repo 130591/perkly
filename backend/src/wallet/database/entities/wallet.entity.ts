@@ -1,18 +1,16 @@
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm'
+import { Column, Entity } from 'typeorm'
 import { DefaultEntity } from '../../../shared/database/core/base.entity'
-import { AccountEntity } from './account.entity'
 
 /**
- * `wallet` table. The FK to `accounts` is exposed through the `account`
- * relation (column `account_id`) so we can filter a wallet by the account's
- * external id, as the original knex join did.
+ * `wallet` table. `account_id` is the account's external UUID, stored as an
+ * opaque column — `accounts` is owned by `identity` now, so wallet does not
+ * import or relate to that entity (see RFC 0004, Decisão 2).
  */
 @Entity('wallet')
 export class WalletEntity extends DefaultEntity<WalletEntity> {
   @Column({ type: 'bigint', default: 0 })
   balance: string
 
-  @OneToOne(() => AccountEntity)
-  @JoinColumn({ name: 'account_id' })
-  account: AccountEntity
+  @Column({ name: 'account_id', type: 'uuid' })
+  accountId: string
 }

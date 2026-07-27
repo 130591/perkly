@@ -8,7 +8,7 @@ import {
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql'
 import { AppModule } from '../../src/app.module'
-import { AccountEntity } from '../../src/wallet/database/entities/account.entity'
+import { AccountEntity } from '../../src/identity/database/entities/account.entity'
 import { WalletEntity } from '../../src/wallet/database/entities/wallet.entity'
 
 /**
@@ -84,6 +84,6 @@ export async function seedWallet(ds: DataSource) {
   const account = await ds.getRepository(AccountEntity).save(new AccountEntity({}))
   const wallet = await ds
     .getRepository(WalletEntity)
-    .save(new WalletEntity({ account }))
+    .save(new WalletEntity({ accountId: account.externalId }))
   return { account, wallet }
 }

@@ -13,8 +13,7 @@ export class WalletRepository extends DefaultTypeOrmRepository<WalletEntity> {
 
   findByAccountId(accountId: string): Promise<WalletEntity | null> {
     return this.findOne({
-      where: { account: { externalId: accountId } },
-      relations: { account: true },
+      where: { accountId },
     })
   }
 
@@ -27,8 +26,7 @@ export class WalletRepository extends DefaultTypeOrmRepository<WalletEntity> {
    */
   findByAccountIdForUpdate(accountId: string): Promise<WalletEntity | null> {
     return this.findOne({
-      where: { account: { externalId: accountId } },
-      relations: { account: true },
+      where: { accountId },
       lock: { mode: 'pessimistic_write' },
     })
   }
@@ -52,11 +50,8 @@ export class WalletRepository extends DefaultTypeOrmRepository<WalletEntity> {
   }
 
   async findAccountId(walletId: number): Promise<string | null> {
-    const wallet = await this.findOne({
-      where: { id: walletId },
-      relations: { account: true },
-    })
-    return wallet?.account?.externalId ?? null
+    const wallet = await this.findOne({ where: { id: walletId } })
+    return wallet?.accountId ?? null
   }
 
   /** Atomic credit; `amountCents` is a trusted numeric (bigint) string. */
