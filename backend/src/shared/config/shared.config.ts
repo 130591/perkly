@@ -3,6 +3,7 @@ import { celcoinConfigSchema } from './celcoin.config'
 import { databaseConfigSchema } from './database.config'
 import { sqsConfigSchema } from './sqs.config'
 import { webhookConfigSchema } from './webhook.config'
+import { backofficeConfigSchema } from './backoffice.config'
 import { z } from 'zod'
 
 export const environmentSchema = z.enum(['test', 'development', 'production'])
@@ -23,6 +24,7 @@ export const sharedConfigSchema = z.object({
   // cada campo aplica seu default de dev (ElasticMQ local / segredo placeholder).
   sqs: sqsConfigSchema,
   webhook: webhookConfigSchema,
+  backoffice: backofficeConfigSchema,
 })
 
 export type Environment = z.infer<typeof environmentSchema>
@@ -64,6 +66,9 @@ export const sharedConfigFactory = (): SharedConfig => {
     },
     webhook: {
       secret: process.env.WEBHOOK_SECRET,
+    },
+    backoffice: {
+      token: process.env.BACKOFFICE_TOKEN,
     },
   })
 

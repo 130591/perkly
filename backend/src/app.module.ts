@@ -10,6 +10,7 @@ import { SettleModule } from './settle/settle.module'
 import { CampaignModule } from './campaign/campaign.module'
 import { PayoutModule } from './payout/payout.module'
 import { ClaimModule } from './claim/claim.module'
+import { IdentityModule } from './identity/identity.module'
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ClaimModule } from './claim/claim.module'
     CampaignModule,
     PayoutModule,
     ClaimModule,
+    IdentityModule,
   ],
   controllers: [],
   providers: [],
