@@ -17,3 +17,12 @@ export class NewTenantBody {
   })
   companyPhone: string
 }
+
+export class LoginBody {
+  @IsEmail()
+  email: string
+
+  @IsString()
+  @IsNotEmpty()
+  password: string
+}

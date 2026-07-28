@@ -4,12 +4,15 @@ import { databaseConfigSchema } from './database.config'
 import { sqsConfigSchema } from './sqs.config'
 import { webhookConfigSchema } from './webhook.config'
 import { backofficeConfigSchema } from './backoffice.config'
+import { jwtConfigSchema } from './jwt.config'
 import { z } from 'zod'
 
 export const environmentSchema = z.enum(['test', 'development', 'production'])
 
 /** CNPJ da Perkly: 14 dígitos, sem máscara. */
-const cnpjSchema = z.string().regex(/^\d{14}$/, 'identity (CNPJ) must be 14 digits')
+const cnpjSchema = z
+  .string()
+  .regex(/^\d{14}$/, 'identity (CNPJ) must be 14 digits')
 
 export const sharedConfigSchema = z.object({
   env: environmentSchema,
@@ -25,6 +28,7 @@ export const sharedConfigSchema = z.object({
   sqs: sqsConfigSchema,
   webhook: webhookConfigSchema,
   backoffice: backofficeConfigSchema,
+  jwt: jwtConfigSchema,
 })
 
 export type Environment = z.infer<typeof environmentSchema>
@@ -70,11 +74,17 @@ export const sharedConfigFactory = (): SharedConfig => {
     backoffice: {
       token: process.env.BACKOFFICE_TOKEN,
     },
+    jwt: {
+      secret: process.env.JWT_SECRET,
+      accessTokenTtlSeconds: process.env.JWT_ACCESS_TOKEN_TTL_SECONDS,
+    },
   })
 
   if (result.success) {
     return result.data
   }
 
-  throw new ConfigException(`Invalid application configuration: ${result.error.message}`)
+  throw new ConfigException(
+    `Invalid application configuration: ${result.error.message}`,
+  )
 }

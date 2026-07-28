@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common'
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
 import { Transactional } from 'typeorm-transactional'
 import { IsNull } from 'typeorm'
 import { Password } from './password'
@@ -9,6 +16,8 @@ import {
   UserRepository,
   UserActivationEntity,
   UserActivationRepository,
+  RefreshTokenEntity,
+  RefreshTokenRepository,
 } from './database'
 import { Token } from './token'
 
@@ -21,6 +30,8 @@ type NewTenant = {
 
 // RFC 0004, Decisão 12.
 const ACTIVATION_TTL_MS = 5 * 24 * 60 * 60 * 1000
+// RFC 0004, Decisão 6.
+const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 @Injectable()
 export class Service {
@@ -28,6 +39,8 @@ export class Service {
     private readonly repository: Repository,
     private readonly userRepo: UserRepository,
     private readonly activationRepo: UserActivationRepository,
+    private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly jwt: JwtService,
   ) {}
 
   @Transactional()
@@ -92,5 +105,44 @@ export class Service {
 
     await this.userRepo.save(user)
     await this.activationRepo.save(activation)
+  }
+
+  async login(input: { email: string; password: string }) {
+    const user = await this.userRepo.findOne({
+      where: { email: input.email },
+    })
+    if (!user) throw new UnauthorizedException('Invalid credentials')
+
+    if (user.status === 'pending_activation')
+      throw new UnauthorizedException(
+        'Account not activated yet — check your welcome e-mail',
+      )
+
+    if (
+      user.status !== 'active' ||
+      !user.passwordHash ||
+      !(await Password.verify(user.passwordHash, input.password))
+    )
+      throw new UnauthorizedException('Invalid credentials')
+
+    const account = await this.repository.findOneByPk(user.accountId)
+    if (!account) throw new UnauthorizedException('Invalid credentials')
+
+    const accessToken = this.jwt.sign({
+      sub: user.externalId,
+      accountId: account.externalId,
+      role: user.role,
+    })
+
+    const { token: refreshToken, tokenHash } = Token.generate()
+    await this.refreshTokenRepo.save(
+      new RefreshTokenEntity({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+      }),
+    )
+
+    return { accessToken, refreshToken }
   }
 }
