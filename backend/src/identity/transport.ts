@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator'
+import { IsEmail, IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
+import { UserRole } from './database'
 
 export class NewTenantBody {
   @IsEmail()
@@ -25,4 +26,12 @@ export class LoginBody {
   @IsString()
   @IsNotEmpty()
   password: string
+}
+
+export class InviteMemberBody {
+  @IsEmail()
+  email: string
+
+  @IsIn(['ADMIN', 'MEMBER'] satisfies UserRole[])
+  role: UserRole
 }

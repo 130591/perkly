@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Req,
@@ -9,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
-import { NewTenantBody, LoginBody } from './transport'
+import { NewTenantBody, LoginBody, InviteMemberBody } from './transport'
 import { Service } from './service'
 import { BackofficeGuard } from './backoffice.guard'
 import { ConfigService } from '../shared/config/service'
@@ -65,6 +67,16 @@ export class Authentication {
       await this.service.refresh(currentRefreshToken)
     this.setRefreshCookie(res, refreshToken)
     return { accessToken }
+  }
+
+  @Post('tenants/:tenantId/invitations')
+  async inviteMember(
+    @Param('tenantId', ParseUUIDPipe) tenantId: string,
+    @Body() body: InviteMemberBody,
+  ) {
+    // Quem pode convidar (checagem de role) é RFC 0005 — dívida da Decisão 9,
+    // igual às demais rotas de negócio sem guard ainda.
+    return this.service.inviteMember(tenantId, body)
   }
 
   // `secure` exige HTTPS — localhost em dev roda HTTP puro, então fica

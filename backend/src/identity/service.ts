@@ -18,6 +18,9 @@ import {
   UserActivationRepository,
   RefreshTokenEntity,
   RefreshTokenRepository,
+  TenantInvitationEntity,
+  TenantInvitationRepository,
+  UserRole,
 } from './database'
 import { Token } from './token'
 
@@ -30,6 +33,7 @@ type NewTenant = {
 
 // RFC 0004, Decisão 12.
 const ACTIVATION_TTL_MS = 5 * 24 * 60 * 60 * 1000
+const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
 // RFC 0004, Decisão 6.
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const REFRESH_GRACE_PERIOD_MS = 30 * 1000
@@ -41,6 +45,7 @@ export class Service {
     private readonly userRepo: UserRepository,
     private readonly activationRepo: UserActivationRepository,
     private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly invitationRepo: TenantInvitationRepository,
     private readonly jwt: JwtService,
   ) {}
 
@@ -168,6 +173,29 @@ export class Service {
     if (!account) throw new UnauthorizedException('Invalid refresh token')
 
     return this.issueTokens(user, account)
+  }
+
+  async inviteMember(
+    tenantExternalId: string,
+    input: { email: string; role: UserRole },
+  ) {
+    const account = await this.repository.findOneById(tenantExternalId)
+    if (!account) throw new NotFoundException('Tenant not found')
+
+    const { token, tokenHash } = Token.generate()
+    const invitation = await this.invitationRepo.save(
+      new TenantInvitationEntity({
+        accountId: account.id,
+        email: input.email,
+        role: input.role,
+        tokenHash,
+        expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
+      }),
+    )
+
+    // TODO: disparo do e-mail de convite fica para o módulo de notificação
+    // (mesma dívida do createTenant). Até lá, o token cru volta na resposta.
+    return { id: invitation.externalId, invitationToken: token }
   }
 
   async logout(refreshToken: string) {
