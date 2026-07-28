@@ -5,6 +5,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
@@ -40,19 +41,7 @@ export class Authentication {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { accessToken, refreshToken } = await this.service.login(body)
-
-    // `secure` exige HTTPS — localhost em dev roda HTTP puro, então fica
-    // condicionado ao ambiente (senão o browser descarta o cookie em dev).
-    const isProd = this.config.get('env') === 'production'
-
-    // Refresh token só viaja por cookie HttpOnly — nunca acessível a JS
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'strict' : 'lax',
-      maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE_MS,
-    })
-
+    this.setRefreshCookie(res, refreshToken)
     return { accessToken }
   }
 
@@ -62,5 +51,31 @@ export class Authentication {
     if (refreshToken) await this.service.logout(refreshToken)
 
     res.clearCookie('refreshToken')
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const currentRefreshToken = req.cookies?.refreshToken as string | undefined
+    if (!currentRefreshToken) throw new UnauthorizedException()
+
+    const { accessToken, refreshToken } =
+      await this.service.refresh(currentRefreshToken)
+    this.setRefreshCookie(res, refreshToken)
+    return { accessToken }
+  }
+
+  // `secure` exige HTTPS — localhost em dev roda HTTP puro, então fica
+  // condicionado ao ambiente (senão o browser descarta o cookie em dev).
+  private setRefreshCookie(res: Response, refreshToken: string) {
+    const isProd = this.config.get('env') === 'production'
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'strict' : 'lax',
+      maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE_MS,
+    })
   }
 }
