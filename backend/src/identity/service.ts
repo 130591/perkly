@@ -198,6 +198,44 @@ export class Service {
     return { id: invitation.externalId, invitationToken: token }
   }
 
+  @Transactional()
+  async acceptInvitation(input: {
+    token: string
+    name: string
+    password: string
+  }) {
+    const now = new Date()
+    const invitation = await this.invitationRepo.findOne({
+      where: { tokenHash: Token.hash(input.token), usedAt: IsNull() },
+    })
+    if (!invitation) throw new BadRequestException('Invalid invitation token')
+
+    if (invitation.expiresAt.getTime() < now.getTime())
+      throw new BadRequestException('Invitation token expired')
+
+    const alreadyMember = await this.userRepo.findOne({
+      where: { email: invitation.email },
+    })
+    if (alreadyMember)
+      throw new ConflictException('User with this e-mail already exists')
+
+    const user = await this.userRepo.save(
+      new UserEntity({
+        email: invitation.email,
+        name: input.name,
+        accountId: invitation.accountId,
+        role: invitation.role,
+        status: 'active',
+        passwordHash: await Password.hash(input.password),
+      }),
+    )
+
+    invitation.usedAt = now
+    await this.invitationRepo.save(invitation)
+
+    return { id: user.externalId }
+  }
+
   async logout(refreshToken: string) {
     const session = await this.refreshTokenRepo.findOne({
       where: { tokenHash: Token.hash(refreshToken) },

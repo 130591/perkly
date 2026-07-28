@@ -35,3 +35,13 @@ export class InviteMemberBody {
   @IsIn(['ADMIN', 'MEMBER'] satisfies UserRole[])
   role: UserRole
 }
+
+export class AcceptInvitationBody {
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsString()
+  @IsNotEmpty()
+  password: string
+}
