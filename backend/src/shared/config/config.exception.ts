@@ -1,1 +1,1 @@
-export class ConfigException extends Error { }
+export class ConfigException extends Error {}
