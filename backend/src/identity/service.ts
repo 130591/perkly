@@ -145,4 +145,16 @@ export class Service {
 
     return { accessToken, refreshToken }
   }
+
+  async logout(refreshToken: string) {
+    const session = await this.refreshTokenRepo.findOne({
+      where: { tokenHash: Token.hash(refreshToken) },
+    })
+    // Cookie ausente/já inválido: logout ainda "funciona" do ponto de vista
+    // do cliente — não há sessão pra revogar, não é erro.
+    if (!session) return
+
+    session.revokedAt = new Date()
+    await this.refreshTokenRepo.save(session)
+  }
 }

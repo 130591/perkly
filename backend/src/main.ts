@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import cookieParser from 'cookie-parser'
 import { initializeTransactionalContext } from 'typeorm-transactional'
 import { AppModule } from './app.module'
 import { ConfigService } from './shared/config/service'
@@ -8,9 +9,15 @@ async function bootstrap() {
   // Must run before the DataSource is created so @Transactional() can hook it.
   initializeTransactionalContext()
   const app = await NestFactory.create(AppModule)
+  // Parseia o cookie do refresh token (RFC 0004, Decisão 5) em req.cookies.
+  app.use(cookieParser())
   // Validate request DTOs and strip unknown properties off the payload.
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   )
   const config: ConfigService = app.get(ConfigService)
   await app.listen(config.get('port'))

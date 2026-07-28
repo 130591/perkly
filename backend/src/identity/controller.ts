@@ -1,5 +1,13 @@
-import { Body, Controller, Patch, Post, Res, UseGuards } from '@nestjs/common'
-import { Response } from 'express'
+import {
+  Body,
+  Controller,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common'
+import { Request, Response } from 'express'
 import { NewTenantBody, LoginBody } from './transport'
 import { Service } from './service'
 import { BackofficeGuard } from './backoffice.guard'
@@ -46,5 +54,13 @@ export class Authentication {
     })
 
     return { accessToken }
+  }
+
+  @Post('logout')
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = req.cookies?.refreshToken as string | undefined
+    if (refreshToken) await this.service.logout(refreshToken)
+
+    res.clearCookie('refreshToken')
   }
 }
