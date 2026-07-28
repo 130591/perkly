@@ -59,20 +59,27 @@ a posse do link (`ClaimController` já documenta isso). Autenticar essas
 rotas não faria sentido — não existe usuário Perkly do outro lado.
 
 **Por quê:** o modo opt-in (`@UseGuards` por rota, igual `BackofficeGuard`
-hoje) repete exatamente o padrão que já causou o problema — toda rota nova
-nasce desprotegida por padrão, e alguém precisa lembrar de adicionar o
-guard. Opt-out inverte o ônus: esquecer de marcar `@Public()` não abre
-brecha, o padrão já é seguro.
+hoje) tem uma fragilidade estrutural: toda rota nova nasce desprotegida por
+padrão, e depende de alguém lembrar de adicionar o guard antes de expor
+aquilo de verdade. Isso é normal num sistema em construção incremental — as
+rotas de `wallet`/`campaign`/`claim` não têm guard hoje pela mesma razão que
+não têm vários outros pedaços ainda: o projeto nunca foi pra produção e
+está sendo montado peça por peça. O ponto desta RFC é fechar isso **antes**
+de qualquer coisa ser exposta de verdade, não corrigir algo que já vazou.
+Opt-out inverte o ônus daqui pra frente: esquecer de marcar `@Public()` não
+abre brecha, o padrão já nasce seguro.
 
 **Alternativa rejeitada (guard por rota, opt-in):** mais explícito rota a
-rota, mas é o desenho que já deixou `wallet`/`campaign`/`claim` sem
-proteção por meses — não corrige a causa raiz (fácil esquecer), só
-descreve o sintoma.
+rota, mas exige lembrança perfeita em toda rota nova, para sempre — o
+mesmo padrão que já levou `wallet`/`campaign`/`claim` a ficarem sem guard
+até agora, simplesmente porque ninguém tinha chegado nessa parte ainda.
+Não corrige a causa raiz (fácil esquecer), só descreve o sintoma.
 
-**Troca:** barateia o caso que já mordeu (rota nova nasce protegida) ao
-custo de precisar auditar/marcar `@Public()` em cada rota que hoje é
-intencionalmente aberta, e o guard global fica um pouco mais esperto
-(precisa checar a exceção via metadata antes de exigir o token).
+**Troca:** barateia o caso que dói (rota nova já nasce protegida, sem
+depender de ninguém lembrar) ao custo de precisar auditar/marcar
+`@Public()` em cada rota que hoje é intencionalmente aberta, e o guard
+global fica um pouco mais esperto (precisa checar a exceção via metadata
+antes de exigir o token).
 
 ### 2. Verificação via `@nestjs/passport` + `passport-jwt`, não guard próprio
 
@@ -181,14 +188,15 @@ fan-out de payouts — RFC 0002) ou dá a alguém novo acesso à conta (convidar
 membro). Ver saldo e rascunhar campanha não movem nada — só a confirmação
 move — então não têm o mesmo risco.
 
-**Por quê permissivo por padrão, ao contrário da Decisão 1:** autenticação
-sem padrão seguro (Decisão 1) expõe **qualquer** dado de **qualquer** conta
-pra **qualquer um** na internet — catastrófico, dado que na Decisão 3 já
-comprometemos accountId vindo só do token; nada te protege se a
-autenticação em si falhar. Esquecer um `@Roles()` numa rota nova só
-significa que um `MEMBER` da **própria** conta faz algo que talvez devesse
-ser só do `ADMIN` — risco bem menor, e não justifica exigir decorator em
-toda rota só pra não esquecer uma diferença de UX dentro da mesma empresa.
+**Por quê permissivo por padrão, ao contrário da Decisão 1:** esquecer a
+autenticação em si (Decisão 1) exporia **qualquer** dado de **qualquer**
+conta pra **qualquer um**, se isso chegasse a produção assim — catastrófico
+o bastante pra justificar um padrão que não deixa esquecer. Esquecer um
+`@Roles()` numa rota nova é um risco de outra ordem: só significa que um
+`MEMBER` da **própria** conta faz algo que talvez devesse ser só do
+`ADMIN` — não vaza nada de ninguém de fora, não justifica exigir decorator
+em toda rota só pra não esquecer uma diferença de UX dentro da mesma
+empresa.
 
 **Alternativa rejeitada (tabela central de permissões):** um único arquivo
 listando "ação X exige role Y", checado via serviço explícito em vez de
