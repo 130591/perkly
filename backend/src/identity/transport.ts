@@ -45,3 +45,8 @@ export class AcceptInvitationBody {
   @IsNotEmpty()
   password: string
 }
+
+export class RequestPasswordResetBody {
+  @IsEmail()
+  email: string
+}

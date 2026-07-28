@@ -10,6 +10,7 @@ import {
   UserActivationRepository,
   RefreshTokenRepository,
   TenantInvitationRepository,
+  PasswordResetRepository,
 } from './database'
 
 @Module({
@@ -34,6 +35,7 @@ import {
     UserActivationRepository,
     RefreshTokenRepository,
     TenantInvitationRepository,
+    PasswordResetRepository,
   ],
 })
 export class IdentityModule {}

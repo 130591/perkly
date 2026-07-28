@@ -20,6 +20,8 @@ import {
   RefreshTokenRepository,
   TenantInvitationEntity,
   TenantInvitationRepository,
+  PasswordResetEntity,
+  PasswordResetRepository,
   UserRole,
 } from './database'
 import { Token } from './token'
@@ -34,6 +36,7 @@ type NewTenant = {
 // RFC 0004, Decisão 12.
 const ACTIVATION_TTL_MS = 5 * 24 * 60 * 60 * 1000
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
+const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000
 // RFC 0004, Decisão 6.
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const REFRESH_GRACE_PERIOD_MS = 30 * 1000
@@ -46,6 +49,7 @@ export class Service {
     private readonly activationRepo: UserActivationRepository,
     private readonly refreshTokenRepo: RefreshTokenRepository,
     private readonly invitationRepo: TenantInvitationRepository,
+    private readonly passwordResetRepo: PasswordResetRepository,
     private readonly jwt: JwtService,
   ) {}
 
@@ -234,6 +238,33 @@ export class Service {
     await this.invitationRepo.save(invitation)
 
     return { id: user.externalId }
+  }
+
+  async requestPasswordReset(email: string) {
+    const user = await this.userRepo.findOne({ where: { email } })
+
+    // Sempre a mesma resposta, exista ou não o e-mail — evita enumeração de
+    // usuários (task 08). Só gera/persiste o token se o usuário existir; o
+    // token nunca volta na resposta (diferente de createTenant/inviteMember,
+    // que são acionados por quem já sabe que a conta existe — aqui é
+    // autoatendimento não-autenticado, devolver o token de volta reabriria
+    // exatamente a enumeração que a resposta genérica existe pra evitar).
+    if (user) {
+      const { tokenHash } = Token.generate()
+      await this.passwordResetRepo.save(
+        new PasswordResetEntity({
+          userId: user.id,
+          tokenHash,
+          expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
+        }),
+      )
+      // TODO: disparo do e-mail de recuperação fica para o módulo de
+      // notificação (mesma dívida de createTenant/inviteMember).
+    }
+
+    return {
+      message: 'If that e-mail exists, a password reset link has been sent',
+    }
   }
 
   async logout(refreshToken: string) {
