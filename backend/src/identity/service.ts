@@ -267,6 +267,31 @@ export class Service {
     }
   }
 
+  @Transactional()
+  async confirmPasswordReset(input: { token: string; password: string }) {
+    const now = new Date()
+    const reset = await this.passwordResetRepo.findOne({
+      where: { tokenHash: Token.hash(input.token), usedAt: IsNull() },
+    })
+    if (!reset) throw new BadRequestException('Invalid password reset token')
+
+    if (reset.expiresAt.getTime() < now.getTime())
+      throw new BadRequestException('Password reset token expired')
+
+    const user = await this.userRepo.findOne({ where: { id: reset.userId } })
+    if (!user) throw new NotFoundException('User not found')
+
+    user.passwordHash = await Password.hash(input.password)
+    reset.usedAt = now
+
+    await this.userRepo.save(user)
+    await this.passwordResetRepo.save(reset)
+
+    // Efeito colateral exclusivo deste fluxo (Decisão 7/US-09): credencial
+    // pode ter sido comprometida, então nenhuma sessão antiga sobrevive.
+    await this.refreshTokenRepo.revokeAllForUser(user.id)
+  }
+
   async logout(refreshToken: string) {
     const session = await this.refreshTokenRepo.findOne({
       where: { tokenHash: Token.hash(refreshToken) },

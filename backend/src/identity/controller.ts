@@ -17,6 +17,7 @@ import {
   InviteMemberBody,
   AcceptInvitationBody,
   RequestPasswordResetBody,
+  ConfirmPasswordResetBody,
 } from './transport'
 import { Service } from './service'
 import { BackofficeGuard } from './backoffice.guard'
@@ -96,6 +97,14 @@ export class Authentication {
   @Post('password-resets')
   async requestPasswordReset(@Body() body: RequestPasswordResetBody) {
     return this.service.requestPasswordReset(body.email)
+  }
+
+  @Post('password-resets/:token/confirm')
+  async confirmPasswordReset(
+    @Param('token') token: string,
+    @Body() body: ConfirmPasswordResetBody,
+  ) {
+    await this.service.confirmPasswordReset({ token, ...body })
   }
 
   // `secure` exige HTTPS — localhost em dev roda HTTP puro, então fica

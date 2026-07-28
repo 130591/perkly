@@ -50,3 +50,9 @@ export class RequestPasswordResetBody {
   @IsEmail()
   email: string
 }
+
+export class ConfirmPasswordResetBody {
+  @IsString()
+  @IsNotEmpty()
+  password: string
+}
