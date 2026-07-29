@@ -51,7 +51,11 @@ export function useIntegrationApp(): IntegrationContext {
 
     const app = moduleRef.createNestApplication()
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     )
     await app.init()
 
@@ -81,7 +85,9 @@ export function useIntegrationApp(): IntegrationContext {
 
 /** Semeia uma conta com carteira zerada e devolve ambas. */
 export async function seedWallet(ds: DataSource) {
-  const account = await ds.getRepository(AccountEntity).save(new AccountEntity({}))
+  const account = await ds
+    .getRepository(AccountEntity)
+    .save(new AccountEntity({}))
   const wallet = await ds
     .getRepository(WalletEntity)
     .save(new WalletEntity({ accountId: account.externalId }))

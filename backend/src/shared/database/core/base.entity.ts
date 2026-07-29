@@ -20,7 +20,7 @@ export abstract class DefaultEntity<T> {
     if (data) {
       Object.assign(this, data)
     }
-    
+
     if (!this.externalId) {
       this.externalId = randomUUID()
     }
@@ -40,7 +40,12 @@ export abstract class DefaultEntity<T> {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number
 
-  @Column({ name: 'external_id', type: 'uuid', unique: true, default: () => 'gen_random_uuid()' })
+  @Column({
+    name: 'external_id',
+    type: 'uuid',
+    unique: true,
+    default: () => 'gen_random_uuid()',
+  })
   externalId: string
 
   @CreateDateColumn({ name: 'created_at' })

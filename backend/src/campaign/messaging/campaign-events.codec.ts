@@ -1,7 +1,4 @@
-import {
-  PayoutBatchRequested,
-  PayoutRecipient,
-} from './campaign-events'
+import { PayoutBatchRequested, PayoutRecipient } from './campaign-events'
 
 /**
  * Codec do wire-format dos eventos do campaign no SQS.
@@ -18,7 +15,7 @@ export function serializePayoutBatchRequested(
     campaignId: event.campaignId,
     accountId: event.accountId,
     linksExpireAt: event.linksExpireAt.toISOString(),
-    recipients: event.recipients.map(recipient => ({
+    recipients: event.recipients.map((recipient) => ({
       name: recipient.name,
       amountCents: recipient.amountCents.toString(),
       channel: recipient.channel,
@@ -53,7 +50,9 @@ const parseChannel = (
   if (type === 'phone') {
     return { type: 'phone', number: asString(raw, 'number') }
   }
-  throw new Error(`PayoutBatchRequested payload has unknown channel type "${type}"`)
+  throw new Error(
+    `PayoutBatchRequested payload has unknown channel type "${type}"`,
+  )
 }
 
 const asString = (raw: Record<string, unknown>, key: string): string => {

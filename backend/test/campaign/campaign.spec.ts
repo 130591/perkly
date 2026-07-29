@@ -45,7 +45,9 @@ describe('Batch — criação', () => {
 
   it('aceita recipient com canal de telefone', () => {
     const b = batch({
-      recipients: [recipient({ channel: { type: 'phone', number: '+5511999998888' } })],
+      recipients: [
+        recipient({ channel: { type: 'phone', number: '+5511999998888' } }),
+      ],
     })
 
     expect(b.recipients[0].channel.type).toBe('phone')
@@ -70,19 +72,26 @@ describe('Batch — invariantes', () => {
   })
 
   it('recusa recipient com valor zero', () => {
-    expect(() => batch({ recipients: [recipient({ amountCents: 0n })] })).toThrow(
-      /amount must be positive/,
-    )
+    expect(() =>
+      batch({ recipients: [recipient({ amountCents: 0n })] }),
+    ).toThrow(/amount must be positive/)
   })
 
   it('recusa recipient com valor negativo', () => {
     expect(() =>
-      batch({ recipients: [recipient(), recipient({ name: 'João', amountCents: -100n })] }),
+      batch({
+        recipients: [
+          recipient(),
+          recipient({ name: 'João', amountCents: -100n }),
+        ],
+      }),
     ).toThrow(/amount must be positive/)
   })
 
   it('recusa expiração dos links no passado', () => {
-    expect(() => batch({ linksExpireAt: past })).toThrow(/must be in the future/)
+    expect(() => batch({ linksExpireAt: past })).toThrow(
+      /must be in the future/,
+    )
   })
 
   it('recusa expiração dos links igual ao agora (tem que ser estritamente futura)', () => {
@@ -119,7 +128,10 @@ describe('Campaign — criação', () => {
       batches: [
         batchDraft({ recipients: [recipient({ amountCents: 5000n })] }),
         batchDraft({
-          recipients: [recipient({ amountCents: 2500n }), recipient({ amountCents: 111n })],
+          recipients: [
+            recipient({ amountCents: 2500n }),
+            recipient({ amountCents: 111n }),
+          ],
         }),
       ],
     })
@@ -128,9 +140,9 @@ describe('Campaign — criação', () => {
   })
 
   it('propaga a invariante do batch na criação (batch sem recipient)', () => {
-    expect(() => campaign({ batches: [batchDraft({ recipients: [] })] })).toThrow(
-      /at least one recipient/,
-    )
+    expect(() =>
+      campaign({ batches: [batchDraft({ recipients: [] })] }),
+    ).toThrow(/at least one recipient/)
   })
 })
 

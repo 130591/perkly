@@ -19,7 +19,8 @@ const draft = (overrides: Partial<PayoutDraft> = {}): PayoutDraft => ({
   ...overrides,
 })
 
-const payout = (overrides: Partial<PayoutDraft> = {}) => Payout.draft(draft(overrides), now)
+const payout = (overrides: Partial<PayoutDraft> = {}) =>
+  Payout.draft(draft(overrides), now)
 
 describe('Payout — criação', () => {
   it('nasce pending', () => {

@@ -97,7 +97,10 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
    * campanha (o batch é agrupamento de recipients, sem lifecycle próprio). O
    * cascade do @OneToMany grava campanha + batches na mesma transação.
    */
-  saveStatuses(entity: CampaignEntity, campaign: Campaign): Promise<CampaignEntity> {
+  saveStatuses(
+    entity: CampaignEntity,
+    campaign: Campaign,
+  ): Promise<CampaignEntity> {
     entity.status = campaign.status
     return this.save(entity)
   }

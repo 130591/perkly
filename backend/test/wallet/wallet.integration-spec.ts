@@ -38,7 +38,7 @@ describe('Wallet', () => {
       .findOneByOrFail({ id: seeded.id })
     expect(persisted.balance).toBe('20000')
   })
-    
+
   it('expõe os saldos do ledger no shape serializado', async () => {
     const wallet = ctx.get(Wallet)
     const { account } = await seedWallet(ctx.ds)

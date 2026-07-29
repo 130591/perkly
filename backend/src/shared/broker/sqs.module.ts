@@ -5,7 +5,10 @@ import { ConfigService } from '../config/service'
 import { queueUrl } from '../config/sqs.config'
 import { PAYOUT_BATCH_QUEUE } from '../../campaign/messaging/queues'
 import { PAYOUT_CREATED_QUEUE } from '../../payout/messaging/queues'
-import { CLAIM_CONFIRMED_QUEUE, CLAIM_EXPIRED_QUEUE } from '../../claim/messaging/queues'
+import {
+  CLAIM_CONFIRMED_QUEUE,
+  CLAIM_EXPIRED_QUEUE,
+} from '../../claim/messaging/queues'
 import { CASH_IN_QUEUE, PAYOUT_CONFIRMED_QUEUE } from '../../settle/queues'
 
 const QUEUES = [
@@ -47,7 +50,11 @@ const QUEUES = [
             secretAccessKey: sqs.secretAccessKey,
           },
         })
-        const queue = (name: string) => ({ name, queueUrl: queueUrl(sqs, name), sqs: client })
+        const queue = (name: string) => ({
+          name,
+          queueUrl: queueUrl(sqs, name),
+          sqs: client,
+        })
         const registrations = QUEUES.map(queue)
 
         return {

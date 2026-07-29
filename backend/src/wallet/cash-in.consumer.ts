@@ -24,6 +24,8 @@ export class CashInConsumer {
   async handle(message: Message): Promise<void> {
     const event = parseCashIn(message.Body ?? '')
     await this.wallet.confirmBalance(event)
-    this.logger.log(`Confirmed cash-in ${event.reference} (${event.endToEndId})`)
+    this.logger.log(
+      `Confirmed cash-in ${event.reference} (${event.endToEndId})`,
+    )
   }
 }

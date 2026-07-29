@@ -2,7 +2,12 @@ import { randomUUID } from 'crypto'
 import { useSqs } from '../wallet/sqs'
 import { useE2eApp } from '../wallet/e2e'
 import { CreateClaimConsumer } from '../../src/claim/messaging/create-claim.consumer'
-import { FUTURE, PAST, payoutCreatedMessage, reloadClaimByPayoutId } from './fixtures'
+import {
+  FUTURE,
+  PAST,
+  payoutCreatedMessage,
+  reloadClaimByPayoutId,
+} from './fixtures'
 
 describe('Claim (e2e)', () => {
   // Registrado ANTES de `useE2eApp()`: confirmar/expirar publica de verdade
@@ -21,7 +26,9 @@ describe('Claim (e2e)', () => {
   async function createClaim(linksExpireAt = FUTURE, amountCents = 5000n) {
     const consumer = e2e.ctx.get(CreateClaimConsumer)
     const payoutId = randomUUID()
-    await consumer.handle(payoutCreatedMessage(payoutId, { linksExpireAt, amountCents }))
+    await consumer.handle(
+      payoutCreatedMessage(payoutId, { linksExpireAt, amountCents }),
+    )
     const entity = await reloadClaimByPayoutId(e2e.ctx.ds, payoutId)
     return entity.externalId
   }
@@ -105,8 +112,14 @@ describe('Claim (e2e)', () => {
       const claimId = await createClaim(FUTURE, 5000n)
 
       const results = await Promise.allSettled([
-        e2e.request().post(`/claims/${claimId}/pix-key`).send({ pixKey: 'a@pix.com' }),
-        e2e.request().post(`/claims/${claimId}/pix-key`).send({ pixKey: 'b@pix.com' }),
+        e2e
+          .request()
+          .post(`/claims/${claimId}/pix-key`)
+          .send({ pixKey: 'a@pix.com' }),
+        e2e
+          .request()
+          .post(`/claims/${claimId}/pix-key`)
+          .send({ pixKey: 'b@pix.com' }),
       ])
 
       const statuses = results.map((r) =>

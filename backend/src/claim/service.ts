@@ -40,7 +40,11 @@ export class ClaimService {
    * em memória antes de qualquer um escrever.
    */
   @Transactional()
-  async confirm(claimId: string, pixKey: string, now = new Date()): Promise<Claim> {
+  async confirm(
+    claimId: string,
+    pixKey: string,
+    now = new Date(),
+  ): Promise<Claim> {
     const entity = await this.repository.findByExternalIdForUpdate(claimId)
     if (!entity) throw new NotFoundException('Claim not found')
 

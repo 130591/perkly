@@ -1,11 +1,11 @@
 import { Recipient } from '../campaign/domain/batch'
 
 export type PayoutStatus =
-  | 'pending'     // aguardando resgate
-  | 'processing'  // resgate confirmado (Claim); pagamento em andamento
-  | 'paid'        // Pix enviado com sucesso
-  | 'failed'      // tentativa de pagamento falhou
-  | 'expired'     // prazo do resgate estourou sem confirmação; reserva a liberar no wallet
+  | 'pending' // aguardando resgate
+  | 'processing' // resgate confirmado (Claim); pagamento em andamento
+  | 'paid' // Pix enviado com sucesso
+  | 'failed' // tentativa de pagamento falhou
+  | 'expired' // prazo do resgate estourou sem confirmação; reserva a liberar no wallet
 
 export type PayoutDraft = {
   campaignId: string
@@ -24,9 +24,7 @@ type PayoutProps = {
 }
 
 export class Payout {
-  private constructor(
-    private readonly props: PayoutProps,
-  ) {}
+  private constructor(private readonly props: PayoutProps) {}
 
   static draft(command: PayoutDraft, now = new Date()): Payout {
     if (command.linksExpireAt <= now) {

@@ -9,7 +9,7 @@ import {
   ValidateNested,
   ValidateIf,
   IsNumberString,
-} from 'class-validator';
+} from 'class-validator'
 import { Type } from 'class-transformer'
 
 import { CampaignDraft, TransferType } from './domain/campaign'
@@ -19,11 +19,11 @@ export class ChannelDto {
   @IsIn(['email', 'phone'])
   type: 'email' | 'phone'
 
-  @ValidateIf(c => c.type === 'email')
+  @ValidateIf((c) => c.type === 'email')
   @IsEmail({}, { message: 'address must be a valid email.' })
   address?: string
 
-  @ValidateIf(c => c.type === 'phone')
+  @ValidateIf((c) => c.type === 'phone')
   @IsString()
   @IsNotEmpty()
   number?: string
@@ -46,14 +46,14 @@ export class ChannelDto {
 export class RecipientDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name: string
 
   @IsNumberString()
-  amountCents: string;
+  amountCents: string
 
   @ValidateNested()
   @Type(() => ChannelDto)
-  channel: ChannelDto;
+  channel: ChannelDto
 
   toDomain(): Recipient {
     return {
@@ -77,7 +77,7 @@ export class BatchDto {
   toCommand(): BatchDraft {
     return {
       linksExpireAt: this.linksExpireAt,
-      recipients: this.recipients.map(r => r.toDomain()),
+      recipients: this.recipients.map((r) => r.toDomain()),
     }
   }
 }
@@ -108,7 +108,7 @@ export class CampaignBody {
       name: this.name,
       message: this.message,
       transferType: this.transferType,
-      batches: this.batches.map(b => b.toCommand()),
+      batches: this.batches.map((b) => b.toCommand()),
     }
   }
 }

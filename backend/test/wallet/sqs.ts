@@ -34,7 +34,9 @@ export function useSqs(): SqsContext {
   beforeAll(async () => {
     container = await new GenericContainer('softwaremill/elasticmq-native')
       .withExposedPorts(SQS_PORT)
-      .withCopyFilesToContainer([{ source: ELASTICMQ_CONF, target: '/opt/elasticmq.conf' }])
+      .withCopyFilesToContainer([
+        { source: ELASTICMQ_CONF, target: '/opt/elasticmq.conf' },
+      ])
       .withWaitStrategy(Wait.forListeningPorts())
       .start()
 

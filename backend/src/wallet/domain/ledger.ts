@@ -1,37 +1,35 @@
 export type Account = 'external' | 'available' | 'reserved' | 'revenue'
 const ACCOUNTS = ['external', 'available', 'reserved', 'revenue'] as const
-    
+
 export type Entry = {
-  account: Account,
+  account: Account
   value: bigint
 }
 
 export type Snapshot = Partial<Record<Account, bigint>>
 
 export type TransactionProps = {
-  id: string,
+  id: string
   entries: Entry[]
-  timestamp: Date,
-  type: 'fund' | 'reserve' | 'settle' | 'expire',
+  timestamp: Date
+  type: 'fund' | 'reserve' | 'settle' | 'expire'
 }
 
 export class Transaction {
-  private constructor(
-    readonly props: TransactionProps
-) {}
-    
-  static create (props: TransactionProps) {
+  private constructor(readonly props: TransactionProps) {}
+
+  static create(props: TransactionProps) {
     this.assertBalanced(props)
     return new Transaction(props)
   }
 
-  private static assertBalanced (transaction: TransactionProps) {
-    const sum = transaction.entries
-      .reduce((s, e) => s + e.value, 0n)
-    
+  private static assertBalanced(transaction: TransactionProps) {
+    const sum = transaction.entries.reduce((s, e) => s + e.value, 0n)
+
     if (sum !== 0n) {
       throw new Error(
-        `Transaction ${transaction.id} is unbalanced: sum ${sum}, should be 0`)
+        `Transaction ${transaction.id} is unbalanced: sum ${sum}, should be 0`,
+      )
     }
   }
 }
@@ -42,16 +40,21 @@ export class Ledger {
   // 'external' representa o mundo fora do sistema — é feito pra ir negativo
   // (dinheiro entrando). 'revenue' ninguém debita ainda. Só available/reserved
   // têm piso: nenhuma operação pode tirar deles mais do que existe.
-  private static readonly GUARDED_ACCOUNTS: readonly Account[] = ['available', 'reserved']
+  private static readonly GUARDED_ACCOUNTS: readonly Account[] = [
+    'available',
+    'reserved',
+  ]
 
   private assertSufficientFunds(tx: Transaction): void {
     for (const account of Ledger.GUARDED_ACCOUNTS) {
       const delta = tx.props.entries
-        .filter(e => e.account === account)
+        .filter((e) => e.account === account)
         .reduce((s, e) => s + e.value, 0n)
 
       if (delta < 0n && this.balanceOf(account) + delta < 0n) {
-        throw new Error(`Transaction ${tx.props.id} would overdraw ${account} funds`)
+        throw new Error(
+          `Transaction ${tx.props.id} would overdraw ${account} funds`,
+        )
       }
     }
   }
@@ -68,20 +71,20 @@ export class Ledger {
 
   summary() {
     const available = this.balanceOf('available') ?? 0n
-    const reserved =  this.balanceOf('reserved') ?? 0n
+    const reserved = this.balanceOf('reserved') ?? 0n
     const total = available + reserved
 
     return {
-      available:available.toString(),
+      available: available.toString(),
       reserved: reserved.toString(),
-      total: total.toString()
+      total: total.toString(),
     }
   }
 
   balanceOf(account: Account) {
     return this.balances.get(account) ?? 0n
   }
-    
+
   static hydrate(snapshot: Snapshot): Ledger {
     const ledger = new Ledger()
     for (const account of ACCOUNTS) {
@@ -90,7 +93,7 @@ export class Ledger {
     }
     return ledger
   }
-    
+
   private record(
     type: TransactionProps['type'],
     entries: Entry[],
@@ -100,31 +103,47 @@ export class Ledger {
   }
 
   fund(amount: bigint, at: Date = new Date()): Transaction {
-    return this.record('fund', [
-      { account: 'external', value: -amount },
-      { account: 'available', value: amount }
-    ], at)
+    return this.record(
+      'fund',
+      [
+        { account: 'external', value: -amount },
+        { account: 'available', value: amount },
+      ],
+      at,
+    )
   }
 
   reserve(amount: bigint, at: Date = new Date()): Transaction {
-    return this.record('reserve', [
-      { account: 'available', value: -amount },
-      { account: 'reserved', value: amount }
-    ], at)
+    return this.record(
+      'reserve',
+      [
+        { account: 'available', value: -amount },
+        { account: 'reserved', value: amount },
+      ],
+      at,
+    )
   }
 
   settle(amount: bigint, fee: bigint, at: Date = new Date()): Transaction {
-    return this.record('settle', [
-      { account: 'reserved', value: -(amount + fee) },
-      { account: 'external', value: amount },
-      { account: 'revenue', value: fee }
-    ], at)
+    return this.record(
+      'settle',
+      [
+        { account: 'reserved', value: -(amount + fee) },
+        { account: 'external', value: amount },
+        { account: 'revenue', value: fee },
+      ],
+      at,
+    )
   }
 
   expire(amount: bigint, at: Date = new Date()): Transaction {
-    return this.record('expire', [
-      { account: 'reserved', value: -amount },
-      { account: 'available', value: amount }
-    ], at)
+    return this.record(
+      'expire',
+      [
+        { account: 'reserved', value: -amount },
+        { account: 'available', value: amount },
+      ],
+      at,
+    )
   }
 }

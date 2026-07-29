@@ -7,7 +7,10 @@ import { AccountEntity } from '../../src/identity/database/entities/account.enti
 import { Wallet } from '../../src/wallet/service'
 import { seedWallet } from '../wallet/setup'
 import { ClaimConfirmed, ClaimExpired } from '../../src/claim/messaging/events'
-import { serializeClaimConfirmed, serializeClaimExpired } from '../../src/claim/messaging/events.codec'
+import {
+  serializeClaimConfirmed,
+  serializeClaimExpired,
+} from '../../src/claim/messaging/events.codec'
 import { PayoutConfirmed } from '../../src/settle/rail-events'
 import { serializePayoutConfirmed } from '../../src/settle/rail-events.codec'
 
@@ -54,7 +57,10 @@ type SeedPayoutOverrides = {
 }
 
 /** Não existe endpoint pra criar um Payout direto (nasce do fan-out do campaign) — semeia direto. */
-export function seedPayout(ds: DataSource, overrides: SeedPayoutOverrides = {}): Promise<PayoutEntity> {
+export function seedPayout(
+  ds: DataSource,
+  overrides: SeedPayoutOverrides = {},
+): Promise<PayoutEntity> {
   return ds.getRepository(PayoutEntity).save(
     new PayoutEntity({
       campaignId: randomUUID(),
@@ -69,7 +75,10 @@ export function seedPayout(ds: DataSource, overrides: SeedPayoutOverrides = {}):
   )
 }
 
-export const claimConfirmedMessage = (payoutId: string, pixKey: string): Message => ({
+export const claimConfirmedMessage = (
+  payoutId: string,
+  pixKey: string,
+): Message => ({
   Body: serializeClaimConfirmed(new ClaimConfirmed(payoutId, pixKey)),
 })
 
@@ -77,7 +86,14 @@ export const claimExpiredMessage = (payoutId: string): Message => ({
   Body: serializeClaimExpired(new ClaimExpired(payoutId)),
 })
 
-export const payoutConfirmedMessage = (reference: string, endToEndId = `E-${reference}`): Message => {
-  const event: PayoutConfirmed = { reference, endToEndId, confirmedAt: new Date() }
+export const payoutConfirmedMessage = (
+  reference: string,
+  endToEndId = `E-${reference}`,
+): Message => {
+  const event: PayoutConfirmed = {
+    reference,
+    endToEndId,
+    confirmedAt: new Date(),
+  }
   return { Body: serializePayoutConfirmed(event) }
 }

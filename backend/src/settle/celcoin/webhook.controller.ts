@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Logger,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 import { SqsService } from '@ssut/nestjs-sqs'
 import { WebhookGuard } from './webhook.guard'
 import { normalizeCashIn, normalizePayoutConfirmed } from './webhook.normalizer'
@@ -29,11 +36,9 @@ export class CelcoinWebhookController {
       const parsed = CelcoinWebhookSchema.parse(payload)
       event = normalizeCashIn(parsed)
     } catch (error) {
-      this.logger.warn(
-       `Discarding pix-payment-in: ${(error as Error).message}`,
-      )
+      this.logger.warn(`Discarding pix-payment-in: ${(error as Error).message}`)
       return { received: true }
-     }
+    }
 
     await this.sqs.send(CASH_IN_QUEUE, {
       id: event.endToEndId,

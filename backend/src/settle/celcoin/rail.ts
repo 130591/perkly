@@ -1,4 +1,11 @@
-import { Charge, ChargeStatus, OpenCharge, OpenPayout, PaymentRail, Transfer } from '../payment-rail'
+import {
+  Charge,
+  ChargeStatus,
+  OpenCharge,
+  OpenPayout,
+  PaymentRail,
+  Transfer,
+} from '../payment-rail'
 import { CelcoinConfig } from '../../shared/config/celcoin.config'
 
 /**
@@ -108,7 +115,9 @@ export class CelcoinPaymentRail implements PaymentRail {
       body: JSON.stringify(body),
     })
     if (!res.ok) {
-      throw new Error(`Celcoin ${path} failed: ${res.status} ${await res.text()}`)
+      throw new Error(
+        `Celcoin ${path} failed: ${res.status} ${await res.text()}`,
+      )
     }
     return res.json()
   }

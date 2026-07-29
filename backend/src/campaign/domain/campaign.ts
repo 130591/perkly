@@ -5,29 +5,24 @@ export type TransferType = 'pix'
 // Estados existem no vocabulário (auditoria/futuro confirm), mas na criação o
 // batch nasce e permanece `draft`. As transições (confirm/cancel) e os estados
 // derivados dos payouts (processing/completed) ficam para a fatia de confirmação.
-export type CampaignStatus =
-  | 'draft'
-  | 'active'
-  | 'closed'
-  | 'canceled'
+export type CampaignStatus = 'draft' | 'active' | 'closed' | 'canceled'
 
 export type CampaignDraft = {
-  accountId: string,
-  name: string,
-  message: string,
-  transferType?: TransferType,
+  accountId: string
+  name: string
+  message: string
+  transferType?: TransferType
   batches: BatchDraft[]
 }
 
 type CampaignProps = {
-  accountId: string,
-  name: string,
-  message: string,
-  transferType: TransferType,
-  status: CampaignStatus,
+  accountId: string
+  name: string
+  message: string
+  transferType: TransferType
+  status: CampaignStatus
   batches: Batch[]
 }
-
 
 export class Campaign {
   private constructor(private readonly props: CampaignProps) {}

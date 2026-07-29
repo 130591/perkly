@@ -37,7 +37,9 @@ import { IdentityModule } from './identity/identity.module'
       },
       dataSourceFactory: (options) => {
         if (!options) throw new Error('Invalid TypeORM options')
-        return Promise.resolve(addTransactionalDataSource(new DataSource(options)))
+        return Promise.resolve(
+          addTransactionalDataSource(new DataSource(options)),
+        )
       },
     }),
     WalletModule,

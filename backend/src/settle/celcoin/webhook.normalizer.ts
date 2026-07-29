@@ -22,9 +22,7 @@ const anchor = (src: {
   clientRequestId?: string
   transactionIdentification?: string
 }): string => {
-  const reference =
-    src.clientRequestId ??
-    src.transactionIdentification
+  const reference = src.clientRequestId ?? src.transactionIdentification
 
   if (!reference) {
     throw new Error('Celcoin pix-payment-in without correlation anchor')
@@ -33,21 +31,13 @@ const anchor = (src: {
   return reference
 }
 
-export function normalizeCashIn(
-  payload: CelcoinPixIn,
-): CashInConfirmed {
-  return 'entity' in payload
-    ? fromEntity(payload)
-    : fromLegacy(payload)
+export function normalizeCashIn(payload: CelcoinPixIn): CashInConfirmed {
+  return 'entity' in payload ? fromEntity(payload) : fromLegacy(payload)
 }
 
-function fromEntity(
-  payload: CelcoinPixInEntity,
-): CashInConfirmed {
+function fromEntity(payload: CelcoinPixInEntity): CashInConfirmed {
   if (payload.status !== 'CONFIRMED') {
-    throw new Error(
-      `Celcoin pix-payment-in not confirmed: ${payload.status}`,
-    )
+    throw new Error(`Celcoin pix-payment-in not confirmed: ${payload.status}`)
   }
 
   return {
@@ -58,9 +48,7 @@ function fromEntity(
   }
 }
 
-function fromLegacy(
-  payload: CelcoinPixInLegacy,
-): CashInConfirmed {
+function fromLegacy(payload: CelcoinPixInLegacy): CashInConfirmed {
   const rb = payload.RequestBody
 
   if (rb.StatusCode.StatusId !== 2) {
@@ -87,9 +75,7 @@ export function normalizePayoutConfirmed(
 
 function payoutFromEntity(payload: CelcoinPixOutEntity): PayoutConfirmed {
   if (payload.status !== 'CONFIRMED') {
-    throw new Error(
-      `Celcoin pix-payment-out not confirmed: ${payload.status}`,
-    )
+    throw new Error(`Celcoin pix-payment-out not confirmed: ${payload.status}`)
   }
 
   return {

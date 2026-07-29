@@ -3,7 +3,11 @@ import { PayoutConfirmedConsumer } from '../../src/payout/messaging/consumers/pa
 import { PayoutEntity } from '../../src/payout/database/payout.entity'
 import { Wallet } from '../../src/wallet/service'
 import { LedgerRepository } from '../../src/wallet/database/repositories'
-import { payoutConfirmedMessage, seedFundedReservedAccount, seedPayout } from './fixtures'
+import {
+  payoutConfirmedMessage,
+  seedFundedReservedAccount,
+  seedPayout,
+} from './fixtures'
 
 describe('PayoutConfirmedConsumer', () => {
   const ctx = useIntegrationApp()

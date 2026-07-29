@@ -7,7 +7,10 @@ import { DomainEventPublisher, PayoutCreated } from './messaging/events'
 import { ClaimConfirmed, ClaimExpired } from '../claim/messaging/events'
 import { PayoutConfirmed } from '../settle/rail-events'
 import { PAYMENT_RAIL, PaymentRail } from '../settle/payment-rail'
-import { BALANCE_RESERVATION, BalanceReservation } from '../wallet/balance-reservation'
+import {
+  BALANCE_RESERVATION,
+  BalanceReservation,
+} from '../wallet/balance-reservation'
 
 @Injectable()
 export class PayoutService {
@@ -15,7 +18,8 @@ export class PayoutService {
     private readonly repository: PayoutRepository,
     private readonly events: DomainEventPublisher,
     @Inject(PAYMENT_RAIL) private readonly rail: PaymentRail,
-    @Inject(BALANCE_RESERVATION) private readonly reservation: BalanceReservation,
+    @Inject(BALANCE_RESERVATION)
+    private readonly reservation: BalanceReservation,
   ) {}
 
   // Uma página de recipients → payouts, numa transação. Idempotente por `pageId`
@@ -104,7 +108,9 @@ export class PayoutService {
    */
   @Transactional()
   async confirmPayment(event: PayoutConfirmed): Promise<void> {
-    const entity = await this.repository.findByExternalIdForUpdate(event.reference)
+    const entity = await this.repository.findByExternalIdForUpdate(
+      event.reference,
+    )
     if (!entity) throw new NotFoundException('Payout not found')
     if (entity.status === 'paid') return // reentrega do webhook — já liquidado
 

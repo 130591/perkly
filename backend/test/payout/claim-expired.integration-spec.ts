@@ -3,7 +3,11 @@ import { ClaimExpiredConsumer } from '../../src/payout/messaging/consumers/claim
 import { PayoutEntity } from '../../src/payout/database/payout.entity'
 import { Wallet } from '../../src/wallet/service'
 import { LedgerRepository } from '../../src/wallet/database/repositories'
-import { claimExpiredMessage, seedFundedReservedAccount, seedPayout } from './fixtures'
+import {
+  claimExpiredMessage,
+  seedFundedReservedAccount,
+  seedPayout,
+} from './fixtures'
 
 describe('ClaimExpiredConsumer', () => {
   const ctx = useIntegrationApp()

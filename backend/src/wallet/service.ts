@@ -1,15 +1,24 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { Transactional } from 'typeorm-transactional'
-import { WalletRepository, ChargeRepository, LedgerRepository } from './database'
+import {
+  WalletRepository,
+  ChargeRepository,
+  LedgerRepository,
+} from './database'
 import { PaymentRail, PAYMENT_RAIL } from '../settle/payment-rail'
 import { CashInConfirmed } from '../settle/rail-events'
-import { BalanceReservation, ReleaseBalance, ReserveBalance, SettleBalance } from './balance-reservation'
+import {
+  BalanceReservation,
+  ReleaseBalance,
+  ReserveBalance,
+  SettleBalance,
+} from './balance-reservation'
 import { Ledger } from './domain/ledger'
 
 type ChargeDto = {
-  method: 'pix' | 'boleto',
-  amount: bigint,
-  accountId: string,
+  method: 'pix' | 'boleto'
+  amount: bigint
+  accountId: string
   idempotencyKey: string
 }
 
@@ -40,7 +49,7 @@ export class Wallet implements BalanceReservation {
     })
     return charge
   }
- 
+
   /**
    * Compromete saldo (available → reserved) para um consumidor externo (ex.: a
    * confirmação de uma campanha). Porta pública `BalanceReservation`: o chamador
@@ -59,9 +68,13 @@ export class Wallet implements BalanceReservation {
     const claimed = await this.walletRepo.claimOperation(input.idempotencyKey)
     if (!claimed) return
 
-    const wallet = await this.walletRepo.findByAccountIdForUpdate(input.accountId)
+    const wallet = await this.walletRepo.findByAccountIdForUpdate(
+      input.accountId,
+    )
     if (!wallet) throw new NotFoundException('Wallet not found')
-    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
+    const ledger = Ledger.hydrate(
+      await this.ledgerRepo.loadBalances(input.accountId),
+    )
     const transaction = ledger.reserve(input.amountCents)
     await this.ledgerRepo.append(wallet.id, transaction)
   }
@@ -76,9 +89,13 @@ export class Wallet implements BalanceReservation {
     const claimed = await this.walletRepo.claimOperation(input.idempotencyKey)
     if (!claimed) return
 
-    const wallet = await this.walletRepo.findByAccountIdForUpdate(input.accountId)
+    const wallet = await this.walletRepo.findByAccountIdForUpdate(
+      input.accountId,
+    )
     if (!wallet) throw new NotFoundException('Wallet not found')
-    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
+    const ledger = Ledger.hydrate(
+      await this.ledgerRepo.loadBalances(input.accountId),
+    )
     const transaction = ledger.expire(input.amountCents)
     await this.ledgerRepo.append(wallet.id, transaction)
   }
@@ -94,9 +111,13 @@ export class Wallet implements BalanceReservation {
     const claimed = await this.walletRepo.claimOperation(input.idempotencyKey)
     if (!claimed) return
 
-    const wallet = await this.walletRepo.findByAccountIdForUpdate(input.accountId)
+    const wallet = await this.walletRepo.findByAccountIdForUpdate(
+      input.accountId,
+    )
     if (!wallet) throw new NotFoundException('Wallet not found')
-    const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(input.accountId))
+    const ledger = Ledger.hydrate(
+      await this.ledgerRepo.loadBalances(input.accountId),
+    )
     const transaction = ledger.settle(input.amountCents, input.fee)
     await this.ledgerRepo.append(wallet.id, transaction)
   }
@@ -110,7 +131,9 @@ export class Wallet implements BalanceReservation {
 
   @Transactional()
   async confirmBalance(event: CashInConfirmed) {
-    const charge = await this.chargeRepo.findByIdempotencyKeyForUpdate(event.reference)
+    const charge = await this.chargeRepo.findByIdempotencyKeyForUpdate(
+      event.reference,
+    )
     if (!charge) throw new NotFoundException('Charge not found')
     if (charge.status === 'PAID') return
 
@@ -127,8 +150,14 @@ export class Wallet implements BalanceReservation {
 
     const ledger = Ledger.hydrate(await this.ledgerRepo.loadBalances(accountId))
     const transaction = ledger.fund(event.amountCents, event.confirmedAt)
-    const transactionId = await this.ledgerRepo.append(charge.walletId, transaction)
+    const transactionId = await this.ledgerRepo.append(
+      charge.walletId,
+      transaction,
+    )
     await this.chargeRepo.markPaid(charge.id, transactionId)
-    await this.walletRepo.applyCredit(charge.walletId, event.amountCents.toString())
+    await this.walletRepo.applyCredit(
+      charge.walletId,
+      event.amountCents.toString(),
+    )
   }
 }

@@ -45,7 +45,9 @@ describe('Campaign (e2e)', () => {
 
     // Semeia saldo disponível: injeta uma transação de fund direto no ledger.
     const ledgerRepo = e2e.ctx.get(LedgerRepository)
-    const ledger = Ledger.hydrate(await ledgerRepo.loadBalances(account.externalId))
+    const ledger = Ledger.hydrate(
+      await ledgerRepo.loadBalances(account.externalId),
+    )
     await ledgerRepo.append(wallet.id, ledger.fund(10000n))
 
     const created = await e2e

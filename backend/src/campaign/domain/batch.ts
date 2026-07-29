@@ -1,20 +1,20 @@
 export type Channel =
-  | { type: 'email', address: string }
-  | { type: 'phone', number: string }
+  | { type: 'email'; address: string }
+  | { type: 'phone'; number: string }
 
 export type Recipient = {
-  name: string,
-  amountCents: bigint,
+  name: string
+  amountCents: bigint
   channel: Channel
 }
 
 export type BatchDraft = {
-  linksExpireAt: Date,
+  linksExpireAt: Date
   recipients: Recipient[]
 }
 
 type BatchProps = {
-  linksExpireAt: Date,
+  linksExpireAt: Date
   recipients: Recipient[]
 }
 
@@ -83,7 +83,7 @@ export class Batch {
       throw new Error('must be in the future')
     }
   }
-    
+
   ensureCanActivate(now: Date) {
     if (this.props.linksExpireAt <= now) {
       throw new Error('batch expired')

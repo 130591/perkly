@@ -6,7 +6,12 @@ import { ClaimExpirationWorker } from '../../src/claim/messaging/expiration.work
 import { ClaimEntity } from '../../src/claim/database/claim.entity'
 import { parseClaimExpired } from '../../src/claim/messaging/events.codec'
 import { CLAIM_EXPIRED_QUEUE } from '../../src/claim/messaging/queues'
-import { FUTURE, PAST, payoutCreatedMessage, reloadClaimByPayoutId } from './fixtures'
+import {
+  FUTURE,
+  PAST,
+  payoutCreatedMessage,
+  reloadClaimByPayoutId,
+} from './fixtures'
 
 describe('ClaimExpirationWorker', () => {
   // Registrado ANTES de `useIntegrationApp()`: o endpoint do ElasticMQ real
@@ -23,7 +28,9 @@ describe('ClaimExpirationWorker', () => {
       const consumer = ctx.get(CreateClaimConsumer)
       const worker = ctx.get(ClaimExpirationWorker)
       const payoutId = randomUUID()
-      await consumer.handle(payoutCreatedMessage(payoutId, { linksExpireAt: PAST }))
+      await consumer.handle(
+        payoutCreatedMessage(payoutId, { linksExpireAt: PAST }),
+      )
 
       await worker.drain()
 
@@ -40,7 +47,9 @@ describe('ClaimExpirationWorker', () => {
       const consumer = ctx.get(CreateClaimConsumer)
       const worker = ctx.get(ClaimExpirationWorker)
       const payoutId = randomUUID()
-      await consumer.handle(payoutCreatedMessage(payoutId, { linksExpireAt: FUTURE }))
+      await consumer.handle(
+        payoutCreatedMessage(payoutId, { linksExpireAt: FUTURE }),
+      )
 
       await worker.drain()
 
@@ -55,7 +64,9 @@ describe('ClaimExpirationWorker', () => {
       const consumer = ctx.get(CreateClaimConsumer)
       const worker = ctx.get(ClaimExpirationWorker)
       const payoutId = randomUUID()
-      await consumer.handle(payoutCreatedMessage(payoutId, { linksExpireAt: PAST }))
+      await consumer.handle(
+        payoutCreatedMessage(payoutId, { linksExpireAt: PAST }),
+      )
       // Confirmar pelo fluxo real depois do prazo é rejeitado pelo próprio
       // guard de domínio (`Claim.claim()`), então não dá pra chegar num
       // "claimed vencido" por API. Força o estado direto — mesmo truque do
@@ -79,7 +90,9 @@ describe('ClaimExpirationWorker', () => {
       const worker = ctx.get(ClaimExpirationWorker)
       const payoutIds = [randomUUID(), randomUUID(), randomUUID()]
       for (const payoutId of payoutIds) {
-        await consumer.handle(payoutCreatedMessage(payoutId, { linksExpireAt: PAST }))
+        await consumer.handle(
+          payoutCreatedMessage(payoutId, { linksExpireAt: PAST }),
+        )
       }
 
       await worker.drain()
@@ -89,7 +102,9 @@ describe('ClaimExpirationWorker', () => {
         expect(claim.status).toBe('expired')
       }
       const events = await eventsOf()
-      expect(events.map((e) => e.payoutId).sort()).toEqual([...payoutIds].sort())
+      expect(events.map((e) => e.payoutId).sort()).toEqual(
+        [...payoutIds].sort(),
+      )
     })
   })
 })

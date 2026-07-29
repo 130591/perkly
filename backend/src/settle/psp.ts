@@ -1,4 +1,10 @@
-import { Charge, OpenCharge, OpenPayout, PaymentRail, Transfer } from './payment-rail'
+import {
+  Charge,
+  OpenCharge,
+  OpenPayout,
+  PaymentRail,
+  Transfer,
+} from './payment-rail'
 
 /** Mock do PSP — implementa a porta com dados fixos. Só suporta pix por ora. */
 export class Psp implements PaymentRail {
@@ -10,7 +16,9 @@ export class Psp implements PaymentRail {
         status: 'pending',
         method: 'pix',
         pixQrCode: '00020101021226980014br.gov.bcb.pix-mock-emv6304A3FF',
-        expiresAt: new Date(Date.now() + (input.expiresInSeconds ?? 3600) * 1000),
+        expiresAt: new Date(
+          Date.now() + (input.expiresInSeconds ?? 3600) * 1000,
+        ),
       }
     }
 

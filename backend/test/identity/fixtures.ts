@@ -65,7 +65,7 @@ export function extractCookie(
   res: { headers: Record<string, unknown> },
   name: string,
 ): string {
-  const raw = res.headers['set-cookie'] as unknown as string[] | undefined
+  const raw = res.headers['set-cookie'] as string[] | undefined
   const found = raw?.find((c) => c.startsWith(`${name}=`))
   if (!found) throw new Error(`cookie ${name} not set`)
   return found.split(';')[0]

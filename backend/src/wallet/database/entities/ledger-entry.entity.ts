@@ -16,9 +16,13 @@ export class LedgerEntryEntity extends DefaultEntity<LedgerEntryEntity> {
   @Column({ type: 'bigint' })
   amount: string
 
-  @ManyToOne(() => LedgerTransactionEntity, (transaction) => transaction.entries, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => LedgerTransactionEntity,
+    (transaction) => transaction.entries,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   @JoinColumn({ name: 'transaction_id' })
   transaction: LedgerTransactionEntity
 }

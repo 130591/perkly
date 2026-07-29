@@ -16,7 +16,9 @@ export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
    * (`idempotencyKey` = `reference` do webhook), serializando confirmações
    * concorrentes do mesmo cash-in. Precisa rodar dentro de `@Transactional`.
    */
-  findByIdempotencyKeyForUpdate(idempotencyKey: string): Promise<ChargeEntity | null> {
+  findByIdempotencyKeyForUpdate(
+    idempotencyKey: string,
+  ): Promise<ChargeEntity | null> {
     return this.findOne({
       where: { idempotencyKey },
       lock: { mode: 'pessimistic_write' },

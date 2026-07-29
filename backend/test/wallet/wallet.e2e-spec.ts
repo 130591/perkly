@@ -1,6 +1,6 @@
 import { seedWallet, useE2eApp } from './e2e'
 import { randomUUID } from 'crypto'
-    
+
 describe('Wallet (e2e)', () => {
   // Registra os hooks do harness (Postgres + app) no describe — nunca no beforeAll.
   const e2e = useE2eApp()
@@ -25,9 +25,9 @@ describe('Wallet (e2e)', () => {
 
   it('deve retornar um erro 404 (Wallet not found)', async () => {
     const res = await e2e
-    .request()
-    .get(`/wallet/${randomUUID()}/balance`)
-    .expect(404)
-     expect(res.body.message).toBe('Wallet not found')
+      .request()
+      .get(`/wallet/${randomUUID()}/balance`)
+      .expect(404)
+    expect(res.body.message).toBe('Wallet not found')
   })
 })

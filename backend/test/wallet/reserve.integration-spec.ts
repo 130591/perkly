@@ -31,7 +31,11 @@ describe('Wallet — reserve/release (idempotência e concorrência)', () => {
     const wallet = ctx.get(Wallet)
     const ledgerRepo = ctx.get(LedgerRepository)
     const account = await fundedAccount(10000n)
-    const input = { accountId: account.externalId, amountCents: 4000n, idempotencyKey: 'reserve-1' }
+    const input = {
+      accountId: account.externalId,
+      amountCents: 4000n,
+      idempotencyKey: 'reserve-1',
+    }
 
     await wallet.reserve(input)
     await wallet.reserve(input) // reentrega — deve ser no-op
@@ -46,9 +50,17 @@ describe('Wallet — reserve/release (idempotência e concorrência)', () => {
     const ledgerRepo = ctx.get(LedgerRepository)
     const account = await fundedAccount(10000n)
 
-    await wallet.reserve({ accountId: account.externalId, amountCents: 4000n, idempotencyKey: 'reserve-1' })
+    await wallet.reserve({
+      accountId: account.externalId,
+      amountCents: 4000n,
+      idempotencyKey: 'reserve-1',
+    })
 
-    const input = { accountId: account.externalId, amountCents: 4000n, idempotencyKey: 'release-1' }
+    const input = {
+      accountId: account.externalId,
+      amountCents: 4000n,
+      idempotencyKey: 'release-1',
+    }
     await wallet.release(input)
     await wallet.release(input) // reentrega — deve ser no-op
 
@@ -66,8 +78,16 @@ describe('Wallet — reserve/release (idempotência e concorrência)', () => {
     // disponíveis. Sem o `FOR UPDATE` serializando, as duas poderiam ler o
     // mesmo snapshot (10000 disponível) e passar no cheque de saldo.
     const results = await Promise.allSettled([
-      wallet.reserve({ accountId: account.externalId, amountCents: 6000n, idempotencyKey: 'concurrent-1' }),
-      wallet.reserve({ accountId: account.externalId, amountCents: 6000n, idempotencyKey: 'concurrent-2' }),
+      wallet.reserve({
+        accountId: account.externalId,
+        amountCents: 6000n,
+        idempotencyKey: 'concurrent-1',
+      }),
+      wallet.reserve({
+        accountId: account.externalId,
+        amountCents: 6000n,
+        idempotencyKey: 'concurrent-2',
+      }),
     ])
 
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1)

@@ -1,10 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import { DefaultEntity } from '../../shared/database/core/base.entity'
 import { Channel } from '../domain/batch'
 

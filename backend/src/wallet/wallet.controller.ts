@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common'
 import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
 import { Wallet } from './service'
 
@@ -11,7 +18,8 @@ class CreateChargeBody {
 
   @IsNotEmpty({ message: 'amount is required.' })
   @Matches(/^[1-9]\d*$/, {
-    message: 'amount must be an amount in cents: a positive integer with no leading zeros or separators.',
+    message:
+      'amount must be an amount in cents: a positive integer with no leading zeros or separators.',
   })
   amount: string
 

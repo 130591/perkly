@@ -6,7 +6,9 @@ import {
 } from '../../src/settle/celcoin/webhook.normalizer'
 
 describe('normalizeCashIn', () => {
-  const entity = (over: Partial<{ status: string; amount: number }> = {}): CelcoinPixIn => ({
+  const entity = (
+    over: Partial<{ status: string; amount: number }> = {},
+  ): CelcoinPixIn => ({
     entity: 'pix-payment-in',
     createTimestamp: '2026-06-16T09:12:00.000+00:00',
     status: over.status ?? 'CONFIRMED',
@@ -54,7 +56,9 @@ describe('normalizeCashIn', () => {
   })
 
   it('lança quando o pix-payment-in não está confirmado', () => {
-    expect(() => normalizeCashIn(entity({ status: 'PROCESSING' }))).toThrow(/not confirmed/)
+    expect(() => normalizeCashIn(entity({ status: 'PROCESSING' }))).toThrow(
+      /not confirmed/,
+    )
   })
 
   it('lança quando não há âncora de correlação', () => {
@@ -98,7 +102,9 @@ describe('normalizePayoutConfirmed', () => {
   })
 
   it('lança quando o pix-payment-out não está confirmado (formato novo)', () => {
-    expect(() => normalizePayoutConfirmed(entity({ status: 'ERROR' }))).toThrow(/not confirmed/)
+    expect(() => normalizePayoutConfirmed(entity({ status: 'ERROR' }))).toThrow(
+      /not confirmed/,
+    )
   })
 
   it('lança quando o pix-payment-out não está confirmado (formato legado)', () => {

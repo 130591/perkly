@@ -26,7 +26,9 @@ describe('ClaimConfirmedConsumer', () => {
       const consumer = ctx.get(ClaimConfirmedConsumer)
       const payout = await seedPayout(ctx.ds, { amountCents: 5000n })
 
-      await consumer.handle(claimConfirmedMessage(payout.externalId, 'ana@pix.com'))
+      await consumer.handle(
+        claimConfirmedMessage(payout.externalId, 'ana@pix.com'),
+      )
 
       const reloaded = await reload(payout.externalId)
       expect(reloaded.status).toBe('processing')

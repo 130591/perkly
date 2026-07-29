@@ -1,4 +1,7 @@
-import { serializeCashIn, parseCashIn } from '../../src/settle/rail-events.codec'
+import {
+  serializeCashIn,
+  parseCashIn,
+} from '../../src/settle/rail-events.codec'
 import { CashInConfirmed } from '../../src/settle/rail-events'
 
 describe('CashInConfirmed codec', () => {
@@ -23,6 +26,8 @@ describe('CashInConfirmed codec', () => {
   })
 
   it('lança quando falta um campo obrigatório', () => {
-    expect(() => parseCashIn('{"reference":"x"}')).toThrow(/missing string "endToEndId"/)
+    expect(() => parseCashIn('{"reference":"x"}')).toThrow(
+      /missing string "endToEndId"/,
+    )
   })
 })
