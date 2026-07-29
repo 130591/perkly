@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { useE2eApp, seedWallet } from '../wallet/e2e'
+import { useE2eApp, seedWallet, signAccessToken } from '../wallet/e2e'
 import { LedgerRepository } from '../../src/wallet/database/repositories'
 import { Ledger } from '../../src/wallet/domain/ledger'
 
@@ -22,9 +22,11 @@ describe('Campaign (e2e)', () => {
   const e2e = useE2eApp()
 
   it('cria uma campanha em draft e devolve id + status', async () => {
+    const token = signAccessToken(e2e.ctx)
     const res = await e2e
       .request()
       .post('/campaign')
+      .set('Authorization', `Bearer ${token}`)
       .send({
         accountId: randomUUID(),
         name: 'Pesquisa NPS',

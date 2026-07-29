@@ -1,5 +1,8 @@
+import { randomUUID } from 'crypto'
 import * as request from 'supertest'
-import { useIntegrationApp } from './setup'
+import { JwtService } from '@nestjs/jwt'
+import { UserRole } from '../../src/identity/database'
+import { IntegrationContext, useIntegrationApp } from './setup'
 export { seedWallet } from './setup'
 
 /**
@@ -21,4 +24,20 @@ export function useE2eApp() {
     ctx,
     request: () => request(ctx.http()),
   }
+}
+
+/**
+ * Assina um access token válido (mesmo payload que `Service.issueTokens`
+ * emite) pra bater em rotas atrás do guard global (RFC 0005, task 01) sem
+ * precisar de um fluxo de login completo.
+ */
+export function signAccessToken(
+  ctx: IntegrationContext,
+  overrides: Partial<{ accountId: string; role: UserRole }> = {},
+): string {
+  return ctx.get(JwtService).sign({
+    sub: randomUUID(),
+    accountId: overrides.accountId ?? randomUUID(),
+    role: overrides.role ?? 'ADMIN',
+  })
 }

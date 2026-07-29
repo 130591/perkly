@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 import { ClaimService } from './service'
 import { ConfirmClaimBody } from './transport'
+import { Public } from '../identity/public.decorator'
 
 /**
  * Endpoints do destinatário — "abrir link" e "informar chave Pix" da jornada.
@@ -16,6 +17,7 @@ import { ConfirmClaimBody } from './transport'
  * mágico do resto do produto).
  */
 @Controller('claims')
+@Public()
 export class ClaimController {
   constructor(private readonly claim: ClaimService) {}
 

@@ -7,6 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { SqsService } from '@ssut/nestjs-sqs'
+import { Public } from '../../identity/public.decorator'
 import { WebhookGuard } from './webhook.guard'
 import { normalizeCashIn, normalizePayoutConfirmed } from './webhook.normalizer'
 import { CashInConfirmed, PayoutConfirmed } from '../rail-events'
@@ -22,6 +23,7 @@ import { CelcoinWebhookOutSchema, CelcoinWebhookSchema } from './webhook.schema'
  * regra de negócio aqui.
  */
 @Controller('webhooks/celcoin')
+@Public()
 @UseGuards(WebhookGuard)
 export class CelcoinWebhookController {
   private readonly logger = new Logger(CelcoinWebhookController.name)

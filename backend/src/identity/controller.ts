@@ -21,6 +21,7 @@ import {
 } from './transport'
 import { Service } from './service'
 import { BackofficeGuard } from './backoffice.guard'
+import { Public } from './public.decorator'
 import { ConfigService } from '../shared/config/service'
 
 // RFC 0004, Decisão 6.
@@ -34,17 +35,20 @@ export class Authentication {
   ) {}
 
   @Post('backoffice/tenants')
+  @Public()
   @UseGuards(BackofficeGuard)
   async newTenant(@Body() body: NewTenantBody) {
     return this.service.createTenant(body)
   }
 
   @Patch('activate')
+  @Public()
   async activeUserAdmin(@Body() body: any) {
     await this.service.activeAdmin(body)
   }
 
   @Post('login')
+  @Public()
   async login(
     @Body() body: LoginBody,
     @Res({ passthrough: true }) res: Response,
@@ -63,6 +67,7 @@ export class Authentication {
   }
 
   @Post('refresh')
+  @Public()
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -87,6 +92,7 @@ export class Authentication {
   }
 
   @Post('invitations/:token/accept')
+  @Public()
   async acceptInvitation(
     @Param('token') token: string,
     @Body() body: AcceptInvitationBody,
@@ -95,11 +101,13 @@ export class Authentication {
   }
 
   @Post('password-resets')
+  @Public()
   async requestPasswordReset(@Body() body: RequestPasswordResetBody) {
     return this.service.requestPasswordReset(body.email)
   }
 
   @Post('password-resets/:token/confirm')
+  @Public()
   async confirmPasswordReset(
     @Param('token') token: string,
     @Body() body: ConfirmPasswordResetBody,

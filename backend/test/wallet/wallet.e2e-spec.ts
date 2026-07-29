@@ -1,4 +1,4 @@
-import { seedWallet, useE2eApp } from './e2e'
+import { seedWallet, signAccessToken, useE2eApp } from './e2e'
 import { randomUUID } from 'crypto'
 
 describe('Wallet (e2e)', () => {
@@ -24,9 +24,11 @@ describe('Wallet (e2e)', () => {
   })
 
   it('deve retornar um erro 404 (Wallet not found)', async () => {
+    const token = signAccessToken(e2e.ctx)
     const res = await e2e
       .request()
       .get(`/wallet/${randomUUID()}/balance`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404)
     expect(res.body.message).toBe('Wallet not found')
   })

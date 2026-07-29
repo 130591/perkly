@@ -92,6 +92,7 @@ describe('Identity (e2e)', () => {
         .request()
         .post('/identity/logout')
         .set('Cookie', cookie)
+        .set('Authorization', `Bearer ${loginRes.body.accessToken}`)
         .expect(201)
 
       await e2e
@@ -104,11 +105,18 @@ describe('Identity (e2e)', () => {
 
   describe('dado um convite de membro aceito', () => {
     it('quando o convidado loga, então acessa com o role recebido', async () => {
-      const { accountId } = await provisionAndActivateAdmin(e2e)
+      const { accountId, email, password } =
+        await provisionAndActivateAdmin(e2e)
+      const adminLoginRes = await e2e
+        .request()
+        .post('/identity/login')
+        .send({ email, password })
+        .expect(201)
 
       const inviteRes = await e2e
         .request()
         .post(`/identity/tenants/${accountId}/invitations`)
+        .set('Authorization', `Bearer ${adminLoginRes.body.accessToken}`)
         .send({ email: 'membro@acme.com', role: 'MEMBER' })
         .expect(201)
 
