@@ -1,9 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
 import { Wallet } from './service'
-import { CurrentUser } from '../identity/current-user.decorator'
-import { AuthenticatedUser } from '../identity/jwt.strategy'
-import { Roles } from '../identity/roles.decorator'
+import { CurrentUser, AuthenticatedUser, Roles } from '../identity/auth'
 
 /** Amounts travel as strings (cents) so they survive JSON without losing the bigint. */
 class CreateChargeBody {

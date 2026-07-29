@@ -1,5 +1,5 @@
 import { IsEmail, IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
-import { UserRole } from './database'
+import { UserRole } from '../database'
 
 export class NewTenantBody {
   @IsEmail()

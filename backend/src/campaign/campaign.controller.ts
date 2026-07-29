@@ -1,9 +1,7 @@
 import { Body, Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common'
 import { CampaignService } from './service'
 import { CampaignBody } from './transport'
-import { CurrentUser } from '../identity/current-user.decorator'
-import { AuthenticatedUser } from '../identity/jwt.strategy'
-import { Roles } from '../identity/roles.decorator'
+import { CurrentUser, AuthenticatedUser, Roles } from '../identity/auth'
 
 @Controller('campaign')
 export class CampaignController {

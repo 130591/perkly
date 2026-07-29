@@ -7,7 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { SqsService } from '@ssut/nestjs-sqs'
-import { Public } from '../../identity/public.decorator'
+import { Public } from '../../identity/auth'
 import { WebhookGuard } from './webhook.guard'
 import { normalizeCashIn, normalizePayoutConfirmed } from './webhook.normalizer'
 import { CashInConfirmed, PayoutConfirmed } from '../rail-events'

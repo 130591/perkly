@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
-import { Authentication } from './controller'
+import { Authentication } from './http/controller'
 import {
   TenantProvisioningService,
   SessionService,
@@ -10,10 +10,7 @@ import {
   PasswordRecoveryService,
 } from './service'
 import { IdentityClient } from './client'
-import { BackofficeGuard } from './backoffice.guard'
-import { JwtStrategy } from './jwt.strategy'
-import { JwtAuthGuard } from './jwt-auth.guard'
-import { RolesGuard } from './roles.guard'
+import { BackofficeGuard, JwtStrategy, JwtAuthGuard, RolesGuard } from './auth'
 import { ConfigService } from '../shared/config/service'
 import {
   Repository,

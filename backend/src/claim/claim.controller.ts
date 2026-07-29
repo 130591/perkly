@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common'
 import { ClaimService } from './service'
 import { ConfirmClaimBody } from './transport'
-import { Public } from '../identity/public.decorator'
+import { Public } from '../identity/auth'
 
 /**
  * Endpoints do destinatário — "abrir link" e "informar chave Pix" da jornada.

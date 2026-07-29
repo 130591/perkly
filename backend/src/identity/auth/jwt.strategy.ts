@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
-import { ConfigService } from '../shared/config/service'
-import { UserRole } from './database'
+import { ConfigService } from '../../shared/config/service'
+import { UserRole } from '../database'
 
 export type AuthenticatedUser = {
   userId: string

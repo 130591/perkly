@@ -24,11 +24,9 @@ import {
   PasswordRecoveryService,
   SessionService,
   TenantProvisioningService,
-} from './service'
-import { BackofficeGuard } from './backoffice.guard'
-import { Public } from './public.decorator'
-import { Roles } from './roles.decorator'
-import { ConfigService } from '../shared/config/service'
+} from '../service'
+import { BackofficeGuard, Public, Roles } from '../auth'
+import { ConfigService } from '../../shared/config/service'
 
 // RFC 0004, Decisão 6.
 const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000

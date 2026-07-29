@@ -4,7 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { ConfigService } from '../shared/config/service'
+import { ConfigService } from '../../shared/config/service'
 
 // Mesmo padrão do `WebhookGuard` (settle/celcoin) — RFC 0004, Decisão 10.
 @Injectable()
