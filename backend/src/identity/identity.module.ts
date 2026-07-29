@@ -8,6 +8,7 @@ import { IdentityClient } from './client'
 import { BackofficeGuard } from './backoffice.guard'
 import { JwtStrategy } from './jwt.strategy'
 import { JwtAuthGuard } from './jwt-auth.guard'
+import { RolesGuard } from './roles.guard'
 import { ConfigService } from '../shared/config/service'
 import {
   Repository,
@@ -39,6 +40,8 @@ import {
     BackofficeGuard,
     JwtStrategy,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Depois do JwtAuthGuard — precisa de req.user.role já populado.
+    { provide: APP_GUARD, useClass: RolesGuard },
     Repository,
     UserRepository,
     UserActivationRepository,

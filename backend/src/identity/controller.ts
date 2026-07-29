@@ -22,6 +22,7 @@ import {
 import { Service } from './service'
 import { BackofficeGuard } from './backoffice.guard'
 import { Public } from './public.decorator'
+import { Roles } from './roles.decorator'
 import { ConfigService } from '../shared/config/service'
 
 // RFC 0004, Decisão 6.
@@ -82,12 +83,11 @@ export class Authentication {
   }
 
   @Post('tenants/:tenantId/invitations')
+  @Roles('ADMIN')
   async inviteMember(
     @Param('tenantId', ParseUUIDPipe) tenantId: string,
     @Body() body: InviteMemberBody,
   ) {
-    // Quem pode convidar (checagem de role) é RFC 0005 — dívida da Decisão 9,
-    // igual às demais rotas de negócio sem guard ainda.
     return this.service.inviteMember(tenantId, body)
   }
 

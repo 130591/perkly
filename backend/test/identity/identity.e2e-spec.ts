@@ -133,6 +133,14 @@ describe('Identity (e2e)', () => {
         .expect(201)
 
       expect(loginRes.body).toEqual({ accessToken: expect.any(String) })
+
+      // RolesGuard (RFC 0005, task 05): convidar é ADMIN-only — MEMBER recusa.
+      await e2e
+        .request()
+        .post(`/identity/tenants/${accountId}/invitations`)
+        .set('Authorization', `Bearer ${loginRes.body.accessToken}`)
+        .send({ email: 'outro@acme.com', role: 'MEMBER' })
+        .expect(403)
     })
   })
 

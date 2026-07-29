@@ -3,6 +3,7 @@ import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
 import { Wallet } from './service'
 import { CurrentUser } from '../identity/current-user.decorator'
 import { AuthenticatedUser } from '../identity/jwt.strategy'
+import { Roles } from '../identity/roles.decorator'
 
 /** Amounts travel as strings (cents) so they survive JSON without losing the bigint. */
 class CreateChargeBody {
@@ -35,6 +36,7 @@ export class WalletController {
    * the PSP notifies payment, so it is intentionally not exposed as an endpoint.
    */
   @Post('charge')
+  @Roles('ADMIN')
   async createCharge(
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: CreateChargeBody,
