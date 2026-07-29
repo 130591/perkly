@@ -1,5 +1,4 @@
 import { seedWallet, signAccessToken, useE2eApp } from './e2e'
-import { randomUUID } from 'crypto'
 
 describe('Wallet (e2e)', () => {
   // Registra os hooks do harness (Postgres + app) no describe — nunca no beforeAll.
@@ -7,10 +6,12 @@ describe('Wallet (e2e)', () => {
 
   it('abre uma cobrança pix e devolve as instruções de pagamento', async () => {
     const { account } = await seedWallet(e2e.ctx.ds)
+    const token = signAccessToken(e2e.ctx, { accountId: account.externalId })
 
     const res = await e2e
       .request()
-      .post(`/wallet/${account.externalId}/charge`)
+      .post('/wallet/charge')
+      .set('Authorization', `Bearer ${token}`)
       .send({ method: 'pix', amount: '20000', idempotencyKey: 'k1' })
       .expect(201)
 
@@ -27,7 +28,7 @@ describe('Wallet (e2e)', () => {
     const token = signAccessToken(e2e.ctx)
     const res = await e2e
       .request()
-      .get(`/wallet/${randomUUID()}/balance`)
+      .get('/wallet/balance')
       .set('Authorization', `Bearer ${token}`)
       .expect(404)
     expect(res.body.message).toBe('Wallet not found')

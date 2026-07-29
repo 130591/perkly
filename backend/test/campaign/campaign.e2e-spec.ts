@@ -76,7 +76,11 @@ describe('Campaign (e2e)', () => {
     // O saldo saiu de available para reserved.
     const balances = await e2e
       .request()
-      .get(`/wallet/${account.externalId}/balance`)
+      .get('/wallet/balance')
+      .set(
+        'Authorization',
+        `Bearer ${signAccessToken(e2e.ctx, { accountId: account.externalId })}`,
+      )
       .expect(200)
 
     expect(balances.body).toEqual({
@@ -106,7 +110,11 @@ describe('Campaign (e2e)', () => {
     // Continua draft: a transação foi revertida por inteiro.
     const balances = await e2e
       .request()
-      .get(`/wallet/${account.externalId}/balance`)
+      .get('/wallet/balance')
+      .set(
+        'Authorization',
+        `Bearer ${signAccessToken(e2e.ctx, { accountId: account.externalId })}`,
+      )
       .expect(200)
 
     expect(balances.body).toEqual({

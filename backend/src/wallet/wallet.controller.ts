@@ -1,13 +1,8 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Post,
-} from '@nestjs/common'
+import { Body, Controller, Get, Post } from '@nestjs/common'
 import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
 import { Wallet } from './service'
+import { CurrentUser } from '../identity/current-user.decorator'
+import { AuthenticatedUser } from '../identity/jwt.strategy'
 
 /** Amounts travel as strings (cents) so they survive JSON without losing the bigint. */
 class CreateChargeBody {
@@ -39,13 +34,13 @@ export class WalletController {
    * Settlement is NOT handled here — `confirmBalance` runs as an async job once
    * the PSP notifies payment, so it is intentionally not exposed as an endpoint.
    */
-  @Post(':accountId/charge')
+  @Post('charge')
   async createCharge(
-    @Param('accountId', ParseUUIDPipe) accountId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() body: CreateChargeBody,
   ) {
     const charge = await this.wallet.addBalance({
-      accountId,
+      accountId: user.accountId,
       method: body.method,
       amount: BigInt(body.amount),
       idempotencyKey: body.idempotencyKey,
@@ -69,8 +64,8 @@ export class WalletController {
    * Read-model with the customer's wallet balances (available, reserved, total).
    * Ledger is the source of truth; amounts are cents-as-strings to survive JSON.
    */
-  @Get(':accountId/balance')
-  async getBalances(@Param('accountId', ParseUUIDPipe) accountId: string) {
-    return this.wallet.findBalances(accountId)
+  @Get('balance')
+  async getBalances(@CurrentUser() user: AuthenticatedUser) {
+    return this.wallet.findBalances(user.accountId)
   }
 }
