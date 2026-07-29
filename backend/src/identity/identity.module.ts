@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common'
+import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
+import { AuthGuard, PassportModule } from '@nestjs/passport'
 import { Authentication } from './controller'
 import { Service } from './service'
 import { IdentityClient } from './client'
 import { BackofficeGuard } from './backoffice.guard'
+import { JwtStrategy } from './jwt.strategy'
 import { ConfigService } from '../shared/config/service'
 import {
   Repository,
@@ -16,6 +19,7 @@ import {
 
 @Module({
   imports: [
+    PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -32,6 +36,10 @@ import {
     Service,
     IdentityClient,
     BackofficeGuard,
+    JwtStrategy,
+    // RFC 0005, Decisão 1 — opt-out: toda rota exige token por padrão.
+    // (task 02 introduz @Public() pra abrir exceção; até lá, nada escapa.)
+    { provide: APP_GUARD, useClass: AuthGuard('jwt') },
     Repository,
     UserRepository,
     UserActivationRepository,
