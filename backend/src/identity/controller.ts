@@ -19,7 +19,12 @@ import {
   RequestPasswordResetBody,
   ConfirmPasswordResetBody,
 } from './transport'
-import { Service } from './service'
+import {
+  MembershipService,
+  PasswordRecoveryService,
+  SessionService,
+  TenantProvisioningService,
+} from './service'
 import { BackofficeGuard } from './backoffice.guard'
 import { Public } from './public.decorator'
 import { Roles } from './roles.decorator'
@@ -31,7 +36,10 @@ const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 @Controller('identity')
 export class Authentication {
   constructor(
-    private readonly service: Service,
+    private readonly tenantProvisioning: TenantProvisioningService,
+    private readonly session: SessionService,
+    private readonly membership: MembershipService,
+    private readonly passwordRecovery: PasswordRecoveryService,
     private readonly config: ConfigService,
   ) {}
 
@@ -39,13 +47,13 @@ export class Authentication {
   @Public()
   @UseGuards(BackofficeGuard)
   async newTenant(@Body() body: NewTenantBody) {
-    return this.service.createTenant(body)
+    return this.tenantProvisioning.createTenant(body)
   }
 
   @Patch('activate')
   @Public()
   async activeUserAdmin(@Body() body: any) {
-    await this.service.activeAdmin(body)
+    await this.tenantProvisioning.activeAdmin(body)
   }
 
   @Post('login')
@@ -54,7 +62,7 @@ export class Authentication {
     @Body() body: LoginBody,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken } = await this.service.login(body)
+    const { accessToken, refreshToken } = await this.session.login(body)
     this.setRefreshCookie(res, refreshToken)
     return { accessToken }
   }
@@ -62,7 +70,7 @@ export class Authentication {
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = req.cookies?.refreshToken as string | undefined
-    if (refreshToken) await this.service.logout(refreshToken)
+    if (refreshToken) await this.session.logout(refreshToken)
 
     res.clearCookie('refreshToken')
   }
@@ -77,7 +85,7 @@ export class Authentication {
     if (!currentRefreshToken) throw new UnauthorizedException()
 
     const { accessToken, refreshToken } =
-      await this.service.refresh(currentRefreshToken)
+      await this.session.refresh(currentRefreshToken)
     this.setRefreshCookie(res, refreshToken)
     return { accessToken }
   }
@@ -88,7 +96,7 @@ export class Authentication {
     @Param('tenantId', ParseUUIDPipe) tenantId: string,
     @Body() body: InviteMemberBody,
   ) {
-    return this.service.inviteMember(tenantId, body)
+    return this.membership.inviteMember(tenantId, body)
   }
 
   @Post('invitations/:token/accept')
@@ -97,13 +105,13 @@ export class Authentication {
     @Param('token') token: string,
     @Body() body: AcceptInvitationBody,
   ) {
-    return this.service.acceptInvitation({ token, ...body })
+    return this.membership.acceptInvitation({ token, ...body })
   }
 
   @Post('password-resets')
   @Public()
   async requestPasswordReset(@Body() body: RequestPasswordResetBody) {
-    return this.service.requestPasswordReset(body.email)
+    return this.passwordRecovery.requestPasswordReset(body.email)
   }
 
   @Post('password-resets/:token/confirm')
@@ -112,7 +120,7 @@ export class Authentication {
     @Param('token') token: string,
     @Body() body: ConfirmPasswordResetBody,
   ) {
-    await this.service.confirmPasswordReset({ token, ...body })
+    await this.passwordRecovery.confirmPasswordReset({ token, ...body })
   }
 
   // `secure` exige HTTPS — localhost em dev roda HTTP puro, então fica

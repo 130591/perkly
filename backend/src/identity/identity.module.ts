@@ -3,7 +3,12 @@ import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { Authentication } from './controller'
-import { Service } from './service'
+import {
+  TenantProvisioningService,
+  SessionService,
+  MembershipService,
+  PasswordRecoveryService,
+} from './service'
 import { IdentityClient } from './client'
 import { BackofficeGuard } from './backoffice.guard'
 import { JwtStrategy } from './jwt.strategy'
@@ -35,7 +40,10 @@ import {
   ],
   controllers: [Authentication],
   providers: [
-    Service,
+    TenantProvisioningService,
+    SessionService,
+    MembershipService,
+    PasswordRecoveryService,
     IdentityClient,
     BackofficeGuard,
     JwtStrategy,

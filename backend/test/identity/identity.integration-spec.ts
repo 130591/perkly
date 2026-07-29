@@ -1,5 +1,9 @@
 import { randomUUID } from 'crypto'
-import { Service } from '../../src/identity/service'
+import {
+  TenantProvisioningService,
+  SessionService,
+  PasswordRecoveryService,
+} from '../../src/identity/service'
 import { IdentityClient } from '../../src/identity/client'
 import { RefreshTokenRepository } from '../../src/identity/database'
 import { Token } from '../../src/identity/token'
@@ -11,7 +15,7 @@ describe('Identity', () => {
   async function provisionAndActivate(
     email = `admin-${randomUUID()}@acme.com`,
   ) {
-    const service = ctx.get(Service)
+    const service = ctx.get(TenantProvisioningService)
     const { activationToken } = await service.createTenant({
       email,
       companyName: 'Acme Ltda',
@@ -57,7 +61,7 @@ describe('Identity', () => {
 
   describe('dado um refresh token usado há mais de 30s (fora do grace period)', () => {
     it('quando é reutilizado, então revoga todas as sessões e nega o refresh subsequente', async () => {
-      const service = ctx.get(Service)
+      const service = ctx.get(SessionService)
       const refreshTokenRepo = ctx.get(RefreshTokenRepository)
       const { email, password } = await provisionAndActivate()
 
@@ -87,29 +91,30 @@ describe('Identity', () => {
 
   describe('dado um pedido de recuperação de senha', () => {
     it('quando confirma com o token, então a senha muda e todas as sessões anteriores são revogadas', async () => {
-      const service = ctx.get(Service)
+      const session = ctx.get(SessionService)
+      const passwordRecovery = ctx.get(PasswordRecoveryService)
       const refreshTokenRepo = ctx.get(RefreshTokenRepository)
       const { email, password } = await provisionAndActivate()
-      const { refreshToken } = await service.login({ email, password })
+      const { refreshToken } = await session.login({ email, password })
 
       // O token cru nunca é devolvido pela API (anti-enumeração, task 08) —
       // espiar `Token.generate` é o único jeito honesto de obtê-lo em teste.
       const spy = jest.spyOn(Token, 'generate')
-      await service.requestPasswordReset(email)
+      await passwordRecovery.requestPasswordReset(email)
       const rawToken = spy.mock.results.at(-1)!.value.token as string
       spy.mockRestore()
 
       const newPassword = 'NovaSenha!2'
-      await service.confirmPasswordReset({
+      await passwordRecovery.confirmPasswordReset({
         token: rawToken,
         password: newPassword,
       })
 
-      await expect(service.login({ email, password })).rejects.toThrow(
+      await expect(session.login({ email, password })).rejects.toThrow(
         'Invalid credentials',
       )
       await expect(
-        service.login({ email, password: newPassword }),
+        session.login({ email, password: newPassword }),
       ).resolves.toEqual({
         accessToken: expect.any(String),
         refreshToken: expect.any(String),
