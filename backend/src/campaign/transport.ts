@@ -5,7 +5,6 @@ import {
   IsIn,
   IsNotEmpty,
   IsString,
-  IsUUID,
   ValidateNested,
   ValidateIf,
   IsNumberString,
@@ -83,9 +82,6 @@ export class BatchDto {
 }
 
 export class CampaignBody {
-  @IsUUID()
-  accountId: string
-
   @IsString()
   @IsNotEmpty()
   name: string
@@ -102,9 +98,8 @@ export class CampaignBody {
   @Type(() => BatchDto)
   batches: BatchDto[]
 
-  toCommand(): CampaignDraft {
+  toCommand(): Omit<CampaignDraft, 'accountId'> {
     return {
-      accountId: this.accountId,
       name: this.name,
       message: this.message,
       transferType: this.transferType,

@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto'
 import { useE2eApp, seedWallet, signAccessToken } from '../wallet/e2e'
 import { LedgerRepository } from '../../src/wallet/database/repositories'
 import { Ledger } from '../../src/wallet/domain/ledger'
@@ -28,7 +27,6 @@ describe('Campaign (e2e)', () => {
       .post('/campaign')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        accountId: randomUUID(),
         name: 'Pesquisa NPS',
         message: 'Obrigado por participar!',
         transferType: 'pix',
@@ -44,6 +42,7 @@ describe('Campaign (e2e)', () => {
 
   it('confirma a campanha: reserva o saldo no wallet e marca confirmed', async () => {
     const { account, wallet } = await seedWallet(e2e.ctx.ds)
+    const token = signAccessToken(e2e.ctx, { accountId: account.externalId })
 
     // Semeia saldo disponível: injeta uma transação de fund direto no ledger.
     const ledgerRepo = e2e.ctx.get(LedgerRepository)
@@ -55,8 +54,8 @@ describe('Campaign (e2e)', () => {
     const created = await e2e
       .request()
       .post('/campaign')
+      .set('Authorization', `Bearer ${token}`)
       .send({
-        accountId: account.externalId,
         name: 'Pesquisa NPS',
         message: 'Obrigado por participar!',
         transferType: 'pix',
@@ -69,6 +68,7 @@ describe('Campaign (e2e)', () => {
     const confirmed = await e2e
       .request()
       .post(`/campaign/${campaignId}/confirm`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(201)
 
     expect(confirmed.body).toEqual({ id: campaignId, status: 'active' })
@@ -77,10 +77,7 @@ describe('Campaign (e2e)', () => {
     const balances = await e2e
       .request()
       .get('/wallet/balance')
-      .set(
-        'Authorization',
-        `Bearer ${signAccessToken(e2e.ctx, { accountId: account.externalId })}`,
-      )
+      .set('Authorization', `Bearer ${token}`)
       .expect(200)
 
     expect(balances.body).toEqual({
@@ -92,12 +89,13 @@ describe('Campaign (e2e)', () => {
 
   it('recusa confirmar com saldo insuficiente (não deixa reserva pela metade)', async () => {
     const { account } = await seedWallet(e2e.ctx.ds) // carteira zerada
+    const token = signAccessToken(e2e.ctx, { accountId: account.externalId })
 
     const created = await e2e
       .request()
       .post('/campaign')
+      .set('Authorization', `Bearer ${token}`)
       .send({
-        accountId: account.externalId,
         name: 'Pesquisa NPS',
         message: 'Obrigado por participar!',
         transferType: 'pix',
@@ -105,16 +103,17 @@ describe('Campaign (e2e)', () => {
       })
       .expect(201)
 
-    await e2e.request().post(`/campaign/${created.body.id}/confirm`).expect(500)
+    await e2e
+      .request()
+      .post(`/campaign/${created.body.id}/confirm`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(500)
 
     // Continua draft: a transação foi revertida por inteiro.
     const balances = await e2e
       .request()
       .get('/wallet/balance')
-      .set(
-        'Authorization',
-        `Bearer ${signAccessToken(e2e.ctx, { accountId: account.externalId })}`,
-      )
+      .set('Authorization', `Bearer ${token}`)
       .expect(200)
 
     expect(balances.body).toEqual({

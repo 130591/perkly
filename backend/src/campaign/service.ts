@@ -32,11 +32,16 @@ export class CampaignService {
    * Assim não há evento a se perder entre o commit e um `send` (RFC 0002).
    */
   @Transactional()
-  async confirm(id: string) {
+  async confirm(id: string, callerAccountId: string) {
     const entity = await this.repository.findWithBatches(id)
     if (!entity) throw new NotFoundException('Campaign not found')
 
     const campaign = this.repository.toDomain(entity)
+    // 404, não 403: revelar que o recurso existe (só que é de outra conta)
+    // vazaria informação sobre contas alheias (RFC 0005, Decisão 3).
+    if (campaign.accountId !== callerAccountId)
+      throw new NotFoundException('Campaign not found')
+
     campaign.activate(new Date())
 
     await this.reservation.reserve({
