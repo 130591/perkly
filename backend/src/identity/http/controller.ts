@@ -25,7 +25,13 @@ import {
   SessionService,
   TenantProvisioningService,
 } from '../service'
-import { BackofficeGuard, Public, Roles } from '../auth'
+import {
+  AuthenticatedUser,
+  BackofficeGuard,
+  CurrentUser,
+  Public,
+  Roles,
+} from '../auth'
 import { ConfigService } from '../../shared/config/service'
 
 // RFC 0004, Decisão 6.
@@ -91,10 +97,11 @@ export class Authentication {
   @Post('tenants/:tenantId/invitations')
   @Roles('ADMIN')
   async inviteMember(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('tenantId', ParseUUIDPipe) tenantId: string,
     @Body() body: InviteMemberBody,
   ) {
-    return this.membership.inviteMember(tenantId, body)
+    return this.membership.inviteMember(tenantId, user.accountId, body)
   }
 
   @Post('invitations/:token/accept')

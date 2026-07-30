@@ -29,8 +29,14 @@ export class MembershipService {
 
   async inviteMember(
     tenantExternalId: string,
+    callerAccountId: string,
     input: { email: string; role: UserRole },
   ) {
+    // 404, não 403: revelar que o tenant existe (só que é de outra conta)
+    // vazaria informação sobre contas alheias.
+    if (tenantExternalId !== callerAccountId)
+      throw new NotFoundException('Tenant not found')
+
     const account = await this.repository.findOneById(tenantExternalId)
     if (!account) throw new NotFoundException('Tenant not found')
 
