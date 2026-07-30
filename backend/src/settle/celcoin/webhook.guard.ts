@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '../../shared/config/service'
+import { Secret } from '../../shared/security/secret'
 
 /**
  * WebhookGuard — decide só "passa ou 401", nada mais.
@@ -21,7 +22,7 @@ export class WebhookGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest()
     const provided = request.headers['x-webhook-secret']
-    if (provided !== this.config.get('webhook').secret) {
+    if (!Secret.matches(provided, this.config.get('webhook').secret)) {
       throw new UnauthorizedException('Invalid webhook credentials')
     }
     return true
