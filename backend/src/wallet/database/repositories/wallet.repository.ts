@@ -54,8 +54,14 @@ export class WalletRepository extends DefaultTypeOrmRepository<WalletEntity> {
     return wallet?.accountId ?? null
   }
 
-  /** Atomic credit; `amountCents` is a trusted numeric (bigint) string. */
+  /** Atomic credit; `amountCents` is bound as a query parameter, never interpolated. */
   applyCredit(id: number, amountCents: string): Promise<unknown> {
-    return this.update(id, { balance: () => `balance + ${amountCents}` })
+    return this.manager
+      .createQueryBuilder()
+      .update(WalletEntity)
+      .set({ balance: () => 'balance + :amountCents' })
+      .where('id = :id', { id })
+      .setParameter('amountCents', amountCents)
+      .execute()
   }
 }
