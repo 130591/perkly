@@ -8,7 +8,6 @@ import { IsNull } from 'typeorm'
 import { Password } from '../password'
 import {
   UserRepository,
-  PasswordResetEntity,
   PasswordResetRepository,
   RefreshTokenRepository,
 } from '../database'
@@ -35,13 +34,11 @@ export class PasswordRecoveryService {
     // exatamente a enumeração que a resposta genérica existe pra evitar).
     if (user) {
       const { tokenHash } = Token.generate()
-      await this.passwordResetRepo.save(
-        new PasswordResetEntity({
-          userId: user.id,
-          tokenHash,
-          expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
-        }),
-      )
+      await this.passwordResetRepo.create({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
+      })
       // TODO: disparo do e-mail de recuperação fica para o módulo de
       // notificação (mesma dívida de createTenant/inviteMember).
     }

@@ -6,7 +6,6 @@ import {
   AccountEntity,
   UserEntity,
   UserRepository,
-  RefreshTokenEntity,
   RefreshTokenRepository,
 } from '../database'
 import { Token } from '../token'
@@ -106,13 +105,11 @@ export class SessionService {
     })
 
     const { token: refreshToken, tokenHash } = Token.generate()
-    await this.refreshTokenRepo.save(
-      new RefreshTokenEntity({
-        userId: user.id,
-        tokenHash,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
-      }),
-    )
+    await this.refreshTokenRepo.create({
+      userId: user.id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    })
 
     return { accessToken, refreshToken }
   }

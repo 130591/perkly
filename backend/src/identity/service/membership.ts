@@ -9,9 +9,7 @@ import { IsNull } from 'typeorm'
 import { Password } from '../password'
 import {
   Repository,
-  UserEntity,
   UserRepository,
-  TenantInvitationEntity,
   TenantInvitationRepository,
   UserRole,
 } from '../database'
@@ -41,15 +39,13 @@ export class MembershipService {
     if (!account) throw new NotFoundException('Tenant not found')
 
     const { token, tokenHash } = Token.generate()
-    const invitation = await this.invitationRepo.save(
-      new TenantInvitationEntity({
-        accountId: account.id,
-        email: input.email,
-        role: input.role,
-        tokenHash,
-        expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
-      }),
-    )
+    const invitation = await this.invitationRepo.create({
+      accountId: account.id,
+      email: input.email,
+      role: input.role,
+      tokenHash,
+      expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
+    })
 
     // TODO: disparo do e-mail de convite fica para o módulo de notificação
     // (mesma dívida do createTenant). Até lá, o token cru volta na resposta.
@@ -77,16 +73,13 @@ export class MembershipService {
     if (alreadyMember)
       throw new ConflictException('User with this e-mail already exists')
 
-    const user = await this.userRepo.save(
-      new UserEntity({
-        email: invitation.email,
-        name: input.name,
-        accountId: invitation.accountId,
-        role: invitation.role,
-        status: 'active',
-        passwordHash: await Password.hash(input.password),
-      }),
-    )
+    const user = await this.userRepo.createFromInvitation({
+      email: invitation.email,
+      name: input.name,
+      accountId: invitation.accountId,
+      role: invitation.role,
+      passwordHash: await Password.hash(input.password),
+    })
 
     invitation.usedAt = now
     await this.invitationRepo.save(invitation)

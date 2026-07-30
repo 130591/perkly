@@ -9,10 +9,7 @@ import { IsNull } from 'typeorm'
 import { Password } from '../password'
 import {
   Repository,
-  AccountEntity,
-  UserEntity,
   UserRepository,
-  UserActivationEntity,
   UserActivationRepository,
 } from '../database'
 import { Token } from '../token'
@@ -43,31 +40,23 @@ export class TenantProvisioningService {
     if (exists)
       throw new ConflictException('Account with this CNPJ already exists')
 
-    const accountCreated = await this.repository.save(
-      new AccountEntity({
-        cnpj: input.cnpj,
-        companyName: input.companyName,
-        companyPhone: input.companyPhone,
-      }),
-    )
+    const accountCreated = await this.repository.create({
+      cnpj: input.cnpj,
+      companyName: input.companyName,
+      companyPhone: input.companyPhone,
+    })
 
-    const userCreated = await this.userRepo.save(
-      new UserEntity({
-        email: input.email,
-        accountId: accountCreated.id,
-        role: 'ADMIN',
-        status: 'pending_activation',
-      }),
-    )
+    const userCreated = await this.userRepo.createPendingAdmin({
+      email: input.email,
+      accountId: accountCreated.id,
+    })
 
     const { token, tokenHash } = Token.generate()
-    await this.activationRepo.save(
-      new UserActivationEntity({
-        userId: userCreated.id,
-        tokenHash,
-        expiresAt: new Date(Date.now() + ACTIVATION_TTL_MS),
-      }),
-    )
+    await this.activationRepo.create({
+      userId: userCreated.id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + ACTIVATION_TTL_MS),
+    })
 
     // TODO: disparo do e-mail de boas-vindas/ativação fica para o módulo de
     // notificação (fora do escopo desta task). Até lá, o token cru volta na
