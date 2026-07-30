@@ -19,6 +19,16 @@ export class NewTenantBody {
   companyPhone: string
 }
 
+export class ActivateAdminBody {
+  @IsString()
+  @IsNotEmpty()
+  token: string
+
+  @IsString()
+  @IsNotEmpty()
+  password: string
+}
+
 export class LoginBody {
   @IsEmail()
   email: string

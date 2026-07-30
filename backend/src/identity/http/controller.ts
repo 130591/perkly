@@ -13,6 +13,7 @@ import {
 import { Request, Response } from 'express'
 import {
   NewTenantBody,
+  ActivateAdminBody,
   LoginBody,
   InviteMemberBody,
   AcceptInvitationBody,
@@ -56,7 +57,7 @@ export class Authentication {
 
   @Patch('activate')
   @Public()
-  async activeUserAdmin(@Body() body: any) {
+  async activeUserAdmin(@Body() body: ActivateAdminBody) {
     await this.tenantProvisioning.activeAdmin(body)
   }
 
