@@ -1,0 +1,30 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.word {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+}
+
+.logo[data-size='sm'] .mark {
+  width: 11px;
+  height: 11px;
+}
+
+.logo[data-size='sm'] .word {
+  font-size: 16px;
+}

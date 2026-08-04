@@ -1,0 +1,43 @@
+:root {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-accent: #129a5e;
+  --color-accent-hover: #0f7a4a;
+  --color-accent-bg: #f7fbf9;
+  --color-accent-bg-strong: #f1f9f4;
+  --color-accent-border: #d8ece1;
+
+  --color-text: #1c1d22;
+  --color-text-secondary: #5f6068;
+  --color-text-tertiary: #75767e;
+  --color-text-muted: #9a9ba1;
+
+  --color-border: #e8e8ec;
+  --color-border-strong: #d2d2d8;
+  --color-border-input: #e1e1e6;
+
+  --color-bg-page: #f7f7f9;
+  --color-bg-page-alt: #f4f4f6;
+  --color-bg-subtle: #f0f0f2;
+  --color-bg-faint: #fafafb;
+  --color-surface: #ffffff;
+
+  --color-danger: #a8322a;
+  --color-danger-border: #f3cdc8;
+  --color-danger-bg: #fbe9e7;
+
+  --color-warning: #9a6406;
+  --color-warning-border: #efe1c4;
+  --color-warning-bg: #fbf6ea;
+  --color-warning-dot: #d68a0c;
+
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 5px 18px rgba(20, 21, 26, 0.07);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.25);
+}

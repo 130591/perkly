@@ -1,0 +1,74 @@
+.button {
+  height: 48px;
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.primary {
+  background: var(--color-text);
+  color: #fff;
+}
+.primary:hover:not(:disabled) {
+  background: #000;
+}
+
+.accent {
+  background: var(--color-accent);
+  color: #fff;
+}
+.accent:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+.accent:disabled {
+  background: #cde7da;
+}
+
+.outline {
+  background: #fff;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-input);
+}
+.outline:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.ghost {
+  background: none;
+  color: var(--color-text-secondary);
+  padding: 0;
+  height: auto;
+  font-size: 13px;
+  font-weight: 500;
+}
+.ghost:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.danger {
+  background: none;
+  color: var(--color-danger);
+  padding: 0;
+  height: auto;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}

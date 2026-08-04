@@ -1,0 +1,121 @@
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.summaryCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.summaryLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.summaryValue {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.summaryHint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 14px;
+}
+
+.ledgerCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ledgerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f4f4f6;
+}
+.ledgerRow:last-child {
+  border-bottom: none;
+}
+
+.ledgerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot[data-direction='in'] {
+  background: var(--color-accent);
+}
+.dot[data-direction='out'] {
+  background: #cdced3;
+}
+
+.ledgerLabel {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ledgerSub {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.ledgerAmount {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+.ledgerAmount[data-direction='in'] {
+  color: var(--color-accent);
+}
+.ledgerAmount[data-direction='out'] {
+  color: var(--color-text);
+}
+
+.note {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 14px;
+}
