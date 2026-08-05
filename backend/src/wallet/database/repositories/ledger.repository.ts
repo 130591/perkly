@@ -4,13 +4,24 @@ import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../../../shared/database/core/typeorm'
-import { Account, Snapshot, Transaction } from '../../domain/ledger'
+import {
+  Account,
+  Snapshot,
+  Transaction,
+  TransactionProps,
+} from '../../domain/ledger'
 import { LedgerTransactionEntity } from '../entities/ledger-transaction.entity'
 import { LedgerEntryEntity } from '../entities/ledger-entry.entity'
 
 /** Loaded once at module init; see database/sql/account-balances.sql. */
 const ACCOUNT_BALANCES_SQL = readFileSync(
   join(__dirname, '..', 'sql', 'account-balances.sql'),
+  'utf8',
+)
+
+/** Loaded once at module init; see database/sql/ledger-entries.sql. */
+const LEDGER_ENTRIES_SQL = readFileSync(
+  join(__dirname, '..', 'sql', 'ledger-entries.sql'),
   'utf8',
 )
 
@@ -37,13 +48,22 @@ export class LedgerRepository extends DefaultTypeOrmRepository<LedgerTransaction
     return snapshot
   }
 
-  /** Persists a domain transaction (with its entries) and returns its DB id. */
-  async append(walletId: number, transaction: Transaction): Promise<number> {
+  /**
+   * Persists a domain transaction (with its entries) and returns its DB id.
+   * `reference` is opaque (see the entity) — pass the caller's idempotencyKey
+   * for reserve/release/settle; omit for fund (linked via `charges` instead).
+   */
+  async append(
+    walletId: number,
+    transaction: Transaction,
+    reference: string | null = null,
+  ): Promise<number> {
     const saved = await this.save(
       new LedgerTransactionEntity({
         externalId: transaction.props.id,
         walletId,
         type: transaction.props.type,
+        reference,
         createdAt: transaction.props.timestamp,
         entries: transaction.props.entries.map(
           (entry) =>
@@ -56,9 +76,46 @@ export class LedgerRepository extends DefaultTypeOrmRepository<LedgerTransaction
     )
     return saved.id
   }
+
+  /** Raw transaction rows for the extract screen — see ledger-entries.sql. */
+  async listEntries(accountId: string): Promise<LedgerEntryRow[]> {
+    const rows: RawLedgerEntryRow[] = await this.manager.query(
+      LEDGER_ENTRIES_SQL,
+      [accountId],
+    )
+    return rows.map((row) => ({
+      id: row.id,
+      type: row.type,
+      createdAt: row.created_at,
+      chargeMethod: row.charge_method,
+      campaignName: row.campaign_name,
+      availableDelta: row.available_delta,
+      reservedDelta: row.reserved_delta,
+    }))
+  }
 }
 
 type AccountBalanceRow = {
   account: Account
   balance: string
+}
+
+export type LedgerEntryRow = {
+  id: string
+  type: TransactionProps['type']
+  createdAt: Date
+  chargeMethod: 'pix' | 'boleto' | null
+  campaignName: string | null
+  availableDelta: string
+  reservedDelta: string
+}
+
+type RawLedgerEntryRow = {
+  id: string
+  type: TransactionProps['type']
+  created_at: Date
+  charge_method: 'pix' | 'boleto' | null
+  campaign_name: string | null
+  available_delta: string
+  reserved_delta: string
 }

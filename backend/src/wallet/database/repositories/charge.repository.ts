@@ -49,4 +49,9 @@ export class ChargeRepository extends DefaultTypeOrmRepository<ChargeEntity> {
   markPaid(id: number, transactionId: number): Promise<unknown> {
     return this.update(id, { status: 'PAID', transactionId })
   }
+
+  /** Read-only lookup for the polling endpoint — no row lock, unlike the `ForUpdate` variant. */
+  findByIdempotencyKey(idempotencyKey: string): Promise<ChargeEntity | null> {
+    return this.findOne({ where: { idempotencyKey } })
+  }
 }

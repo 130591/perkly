@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator'
 import { Wallet } from './service'
 import { CurrentUser, AuthenticatedUser, Roles } from '../identity/auth'
@@ -67,5 +67,20 @@ export class WalletController {
   @Get('balance')
   async getBalances(@CurrentUser() user: AuthenticatedUser) {
     return this.wallet.findBalances(user.accountId)
+  }
+
+  /** Read-model for the extract screen — most recent transaction first. */
+  @Get('ledger')
+  async getLedger(@CurrentUser() user: AuthenticatedUser) {
+    return this.wallet.listLedger(user.accountId)
+  }
+
+  /** Polled by the add-funds modal while a charge is pending. */
+  @Get('charges/:idempotencyKey')
+  async getChargeStatus(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('idempotencyKey') idempotencyKey: string,
+  ) {
+    return this.wallet.getChargeStatus(user.accountId, idempotencyKey)
   }
 }
