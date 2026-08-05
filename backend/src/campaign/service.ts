@@ -53,4 +53,42 @@ export class CampaignService {
     const saved = await this.repository.saveStatuses(entity, campaign)
     return { id: saved.externalId, status: saved.status }
   }
+
+  /** Read-model for the campaigns list screen. */
+  async list(accountId: string) {
+    return this.repository.listStats(accountId)
+  }
+
+  /**
+   * Read-model for the campaign detail screen. Reuses `listStats` (same
+   * tenant-scoped query the list screen uses) rather than a second query
+   * shape — 404, not a narrower WHERE, keeps "campaign exists but isn't
+   * yours" indistinguishable from "doesn't exist" (RFC 0005, Decisão 3).
+   */
+  async findById(accountId: string, id: string) {
+    const campaigns = await this.repository.listStats(accountId)
+    const campaign = campaigns.find((c) => c.id === id)
+    if (!campaign) throw new NotFoundException('Campaign not found')
+    return campaign
+  }
+
+  /**
+   * Read-model for the "Destinatários" table. Runs `findById` first purely
+   * for its tenant-scoping + 404 — a caller can't page through another
+   * tenant's recipients by guessing a campaign id.
+   */
+  async findRecipients(
+    accountId: string,
+    id: string,
+    page: number,
+    pageSize: number,
+  ) {
+    await this.findById(accountId, id)
+    const { items, total } = await this.repository.listRecipients(
+      id,
+      pageSize,
+      (page - 1) * pageSize,
+    )
+    return { items, total, page, pageSize }
+  }
 }

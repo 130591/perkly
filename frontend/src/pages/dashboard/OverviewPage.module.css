@@ -26,6 +26,17 @@
   gap: 24px;
 }
 
+.distributedCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
 .ring {
   position: relative;
   width: 120px;
@@ -80,6 +91,96 @@
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--color-accent);
+}
+
+.metricSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+}
+
+.metricSubMuted {
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+}
+
+.metricDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.metricDot[data-tone='success'] {
+  background: var(--color-accent);
+}
+.metricDot[data-tone='warning'] {
+  background: var(--color-warning-dot);
+}
+
+/* "Warning alert with list items" pattern — white card, a tinted header
+   strip labeling it, then one full-width row per actionable item. */
+.attentionCard {
+  background: #fff;
+  border: 1px solid #efe1c4;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 26px;
+}
+
+.attentionHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #fdf8ee;
+  border-bottom: 1px solid #f3ead3;
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9a6406;
+}
+
+.attentionDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d68a0c;
+  flex-shrink: 0;
+}
+
+.attentionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f6f0e3;
+  padding: 13px 18px;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  text-align: left;
+  text-decoration: none;
+}
+.attentionItem:last-child {
+  border-bottom: none;
+}
+.attentionItem:hover,
+.attentionItem:visited {
+  color: var(--color-text-secondary);
+}
+
+.attentionLink {
+  color: #9a6406;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .sectionHeader {

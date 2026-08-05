@@ -1,10 +1,24 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../../shared/database/core/typeorm'
 import { CampaignEntity, BatchEntity } from './campaign.entity'
 import { Campaign, CampaignStatus, TransferType } from '../domain/campaign'
-import { Batch } from '../domain/batch'
+import { Batch, Channel } from '../domain/batch'
+
+/** Loaded once at module init; see database/sql/campaign-stats.sql. */
+const CAMPAIGN_STATS_SQL = readFileSync(
+  join(__dirname, 'sql', 'campaign-stats.sql'),
+  'utf8',
+)
+
+/** Loaded once at module init; see database/sql/campaign-recipients.sql. */
+const CAMPAIGN_RECIPIENTS_SQL = readFileSync(
+  join(__dirname, 'sql', 'campaign-recipients.sql'),
+  'utf8',
+)
 
 @Injectable()
 export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity> {
@@ -104,4 +118,101 @@ export class CampaignRepository extends DefaultTypeOrmRepository<CampaignEntity>
     entity.status = campaign.status
     return this.save(entity)
   }
+
+  /** Read-model for the campaigns list/detail screens — see campaign-stats.sql. */
+  async listStats(accountId: string): Promise<CampaignStatsRow[]> {
+    const rows: RawCampaignStatsRow[] = await this.manager.query(
+      CAMPAIGN_STATS_SQL,
+      [accountId],
+    )
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      status: row.status as CampaignStatus,
+      createdAt: row.created_at,
+      expiresAt: row.expires_at,
+      sent: Number(row.sent),
+      redeemed: Number(row.redeemed),
+      pending: Number(row.pending),
+      expired: Number(row.expired),
+      totalCents: row.total_cents,
+      pendingCents: row.pending_cents,
+      paidCents: row.paid_cents,
+    }))
+  }
+
+  /** Read-model for the "Destinatários" table — see campaign-recipients.sql. */
+  async listRecipients(
+    campaignExternalId: string,
+    limit: number,
+    offset: number,
+  ): Promise<{ items: RecipientRow[]; total: number }> {
+    const rows: RawRecipientRow[] = await this.manager.query(
+      CAMPAIGN_RECIPIENTS_SQL,
+      [campaignExternalId, limit, offset],
+    )
+    return {
+      total: rows[0] ? Number(rows[0].total_count) : 0,
+      items: rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        channel: row.channel,
+        amountCents: row.amount_cents,
+        status: row.status,
+        paidAt: row.paid_at,
+        createdAt: row.created_at,
+      })),
+    }
+  }
+}
+
+export type CampaignStatsRow = {
+  id: string
+  name: string
+  status: CampaignStatus
+  createdAt: Date
+  expiresAt: Date | null
+  sent: number
+  redeemed: number
+  pending: number
+  expired: number
+  totalCents: string
+  pendingCents: string
+  paidCents: string
+}
+
+type RawCampaignStatsRow = {
+  id: string
+  name: string
+  status: string
+  created_at: Date
+  expires_at: Date | null
+  sent: string
+  redeemed: string
+  pending: string
+  expired: string
+  total_cents: string
+  pending_cents: string
+  paid_cents: string
+}
+
+export type RecipientRow = {
+  id: string
+  name: string
+  channel: Channel
+  amountCents: string
+  status: string
+  paidAt: Date | null
+  createdAt: Date
+}
+
+type RawRecipientRow = {
+  id: string
+  name: string
+  channel: Channel
+  amount_cents: string
+  status: string
+  paid_at: Date | null
+  created_at: Date
+  total_count: string
 }

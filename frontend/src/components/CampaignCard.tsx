@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { CampaignSummary } from '../lib/fixtures'
+import type { CampaignSummary } from '../api/types'
 import { formatBRL, formatDate } from '../lib/format'
 import styles from './CampaignCard.module.css'
 
@@ -23,7 +23,7 @@ export function CampaignCard({
           <span className={styles.name}>{campaign.name}</span>
           <span className={styles.badge} data-tone={campaign.status === 'active' ? 'success' : 'neutral'}>
             <span className={styles.badgeDot} />
-            {campaign.status === 'active' ? 'Ativa' : 'Concluída'}
+            {campaign.status === 'active' ? 'Ativa' : campaign.status === 'draft' ? 'Rascunho' : 'Concluída'}
           </span>
         </div>
         <span className={styles.total}>{formatBRL(campaign.totalCents)}</span>

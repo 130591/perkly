@@ -91,6 +91,142 @@
   margin-top: 6px;
 }
 
+/* --- Reward method selector --- */
+
+.methodRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.methodOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.methodOption[data-selected='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+.methodOption[data-disabled='true'] {
+  color: var(--color-text-muted);
+  background: var(--color-bg-faint);
+}
+
+.methodDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.methodTag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent-hover);
+}
+
+.methodTagMuted {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+/* --- CSV upload --- */
+
+.dropzone {
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--color-bg-faint);
+}
+.dropzone[data-dragging='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+.dropzoneIcon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 10px;
+  border-radius: 9px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.dropzoneTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.dropzoneHint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.fileCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.fileIcon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: var(--color-text);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fileMeta {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
 .rowBetween {
   display: flex;
   align-items: center;

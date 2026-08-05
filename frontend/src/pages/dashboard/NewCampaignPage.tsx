@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type DragEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mutate } from 'swr'
 import { PageHeader } from '../../components/PageHeader'
 import { Button } from '../../components/Button'
+import { StatusBadge } from '../../components/StatusBadge'
 import { useAuth } from '../../auth/AuthContext'
 import { createCampaign, confirmCampaign } from '../../api/campaign'
 import { getBalances } from '../../api/wallet'
 import { ApiError } from '../../api/http'
-import { formatBRL, reaisToCents } from '../../lib/format'
+import { formatBRL, formatDate, reaisToCents } from '../../lib/format'
 import type { CampaignInput, Recipient } from '../../api/types'
 import styles from './NewCampaignPage.module.css'
 
@@ -20,32 +21,42 @@ const EXPIRY_OPTIONS = [7, 15, 30, 60]
 type ParsedRow = { line: number; name: string; email: string; amountCents: bigint }
 type Issue = { line: number; raw: string; reason: string }
 
+/** A first line whose 3rd column isn't a number reads as a header (`nome,email,valor`), not data — skipped, not counted as an issue. */
+function looksLikeHeader(line: string): boolean {
+  const parts = line.split(',').map((p) => p.trim())
+  if (parts.length !== 3) return false
+  return !Number.isFinite(Number.parseFloat(parts[2].replace(',', '.')))
+}
+
 function parseCsv(text: string): { rows: ParsedRow[]; issues: Issue[] } {
   const rows: ParsedRow[] = []
   const issues: Issue[] = []
 
-  text
+  const lines = text
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .forEach((raw, idx) => {
-      const line = idx + 1
-      const [name, email, valor] = raw.split(',').map((part) => part.trim())
-      if (!name || !email || !valor) {
-        issues.push({ line, raw, reason: 'colunas faltando' })
-        return
-      }
-      if (!/.+@.+\..+/.test(email)) {
-        issues.push({ line, raw, reason: 'e-mail inválido' })
-        return
-      }
-      const amount = Number.parseFloat(valor.replace(',', '.'))
-      if (!Number.isFinite(amount) || amount <= 0) {
-        issues.push({ line, raw, reason: 'valor inválido' })
-        return
-      }
-      rows.push({ line, name, email, amountCents: reaisToCents(valor) })
-    })
+
+  lines.forEach((raw, idx) => {
+    if (idx === 0 && looksLikeHeader(raw)) return
+
+    const line = idx + 1
+    const [name, email, valor] = raw.split(',').map((part) => part.trim())
+    if (!name || !email || !valor) {
+      issues.push({ line, raw, reason: 'colunas faltando' })
+      return
+    }
+    if (!/.+@.+\..+/.test(email)) {
+      issues.push({ line, raw, reason: 'e-mail inválido' })
+      return
+    }
+    const amount = Number.parseFloat(valor.replace(',', '.'))
+    if (!Number.isFinite(amount) || amount <= 0) {
+      issues.push({ line, raw, reason: 'valor inválido' })
+      return
+    }
+    rows.push({ line, name, email, amountCents: reaisToCents(valor) })
+  })
 
   return { rows, issues }
 }
@@ -59,6 +70,9 @@ export function NewCampaignPage() {
   const [message, setMessage] = useState('')
   const [expiresDays, setExpiresDays] = useState(30)
   const [csvText, setCsvText] = useState('')
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,6 +80,21 @@ export function NewCampaignPage() {
 
   const { rows, issues } = useMemo(() => parseCsv(csvText), [csvText])
   const rewardsCents = rows.reduce((sum, r) => sum + r.amountCents, 0n)
+  const expiresAtIso = new Date(Date.now() + expiresDays * 24 * 60 * 60 * 1000).toISOString()
+
+  function loadFile(file: File) {
+    setFileName(file.name)
+    const reader = new FileReader()
+    reader.onload = () => setCsvText(String(reader.result ?? ''))
+    reader.readAsText(file)
+  }
+
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) loadFile(file)
+  }
 
   const step1Valid = name.trim().length > 0 && message.trim().length > 0
   const step2Valid = rows.length > 0
@@ -84,7 +113,7 @@ export function NewCampaignPage() {
     setIsSubmitting(true)
     setError(null)
     try {
-      const linksExpireAt = new Date(Date.now() + expiresDays * 24 * 60 * 60 * 1000).toISOString()
+      const linksExpireAt = expiresAtIso
       const recipients: Recipient[] = rows.map((r) => ({
         name: r.name,
         amountCents: r.amountCents.toString(),
@@ -170,6 +199,22 @@ export function NewCampaignPage() {
               <div className={styles.hint}>Aparece no e-mail e na página de resgate.</div>
 
               <label className={styles.label} style={{ marginTop: 18 }}>
+                Recompensa via
+              </label>
+              <div className={styles.methodRow}>
+                <div className={styles.methodOption} data-selected="true">
+                  <span className={styles.methodDot} />
+                  <span>PIX</span>
+                  <span className={styles.methodTag}>Selecionado</span>
+                </div>
+                <div className={styles.methodOption} data-disabled="true">
+                  <span>Gift card &middot; Doação</span>
+                  <span className={styles.methodTagMuted}>Em breve</span>
+                </div>
+              </div>
+              <div className={styles.hint}>No MVP toda recompensa é entregue via PIX. Outros métodos chegam em breve.</div>
+
+              <label className={styles.label} style={{ marginTop: 18 }}>
                 Expiração dos links
               </label>
               <select className={styles.input} value={expiresDays} onChange={(e) => setExpiresDays(Number(e.target.value))}>
@@ -179,14 +224,62 @@ export function NewCampaignPage() {
                   </option>
                 ))}
               </select>
+              <div className={styles.hint}>Expira em {formatDate(expiresAtIso)}. Valores não resgatados voltam ao saldo.</div>
             </div>
           )}
 
           {step === 2 && (
             <div className={styles.card}>
-              <div className={styles.rowBetween}>
-                <label className={styles.label}>Destinatários (nome, e-mail, valor — um por linha)</label>
-                <button className={styles.sampleLink} onClick={() => setCsvText(SAMPLE_CSV)} type="button">
+              <label className={styles.label}>Upload da lista de destinatários (batch)</label>
+              <div
+                className={styles.dropzone}
+                data-dragging={isDragging}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragging(true)
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={onDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className={styles.dropzoneIcon}>CSV</div>
+                <div className={styles.dropzoneTitle}>Arraste seu arquivo .csv ou clique para selecionar</div>
+                <div className={styles.dropzoneHint}>Colunas: nome, e-mail, valor — uma pessoa por linha</div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className={styles.hiddenInput}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) loadFile(file)
+                  }}
+                />
+              </div>
+
+              {fileName && (
+                <div className={styles.fileCard}>
+                  <div className={styles.fileIcon}>CSV</div>
+                  <div className={styles.fileInfo}>
+                    <div className={styles.fileName}>{fileName}</div>
+                    <div className={styles.fileMeta}>{csvText.split('\n').filter((l) => l.trim()).length} linhas no arquivo</div>
+                  </div>
+                  <StatusBadge status="active" label="Importado" variant="inline" />
+                </div>
+              )}
+
+              <div className={styles.rowBetween} style={{ marginTop: 20 }}>
+                <label className={styles.label} style={{ marginBottom: 0 }}>
+                  Pré-visualização — edite se necessário
+                </label>
+                <button
+                  className={styles.sampleLink}
+                  onClick={() => {
+                    setCsvText(SAMPLE_CSV)
+                    setFileName('lista-exemplo.csv')
+                  }}
+                  type="button"
+                >
                   Usar lista de exemplo
                 </button>
               </div>
@@ -195,7 +288,7 @@ export function NewCampaignPage() {
                 value={csvText}
                 onChange={(e) => setCsvText(e.target.value)}
                 spellCheck={false}
-                placeholder={'Ana Ribeiro,ana@exemplo.com,50\nBruno Alves,bruno@exemplo.com,50'}
+                placeholder={'nome,email,valor\nAna Ribeiro,ana@exemplo.com,50\nBruno Alves,bruno@exemplo.com,50'}
               />
               <div className={styles.countsGrid}>
                 <div className={styles.countCard} data-tone="ok">

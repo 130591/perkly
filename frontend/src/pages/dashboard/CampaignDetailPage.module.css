@@ -49,11 +49,102 @@
   color: var(--color-text-tertiary);
 }
 
+/* --- Donut + stats + financial summary --- */
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 2fr;
+  gap: 16px;
+  margin-bottom: 26px;
+  align-items: stretch;
+}
+
+.donutCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.donut {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donutInner {
+  position: absolute;
+  inset: 16px;
+  background: var(--color-surface);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donutValue {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.donutLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.legend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  flex: 1;
+  color: var(--color-text-secondary);
+}
+
+.legendValue {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.detailRight {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-bottom: 16px;
 }
 
 .statCard {
@@ -79,11 +170,11 @@
 }
 
 .summaryCard {
+  flex: 1;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 18px 20px;
-  margin-bottom: 14px;
 }
 
 .summaryRow {
@@ -91,14 +182,135 @@
   justify-content: space-between;
   font-size: 13px;
   font-weight: 600;
-  padding: 3px 0;
+  padding: 5px 0;
+}
+
+.summaryDivider {
+  border-top: 1px solid var(--color-border);
+  margin: 8px 0;
 }
 
 .mono {
   font-family: var(--font-mono);
 }
 
+/* --- Destinatários --- */
+
+.recipientsCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.recipientsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.recipientsHead h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.recipientsCount {
+  font-size: 12.5px;
+  color: var(--color-text-tertiary);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--color-bg-page-alt);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.nameCell {
+  font-weight: 600;
+}
+
+.mutedCell {
+  color: var(--color-text-tertiary);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actionLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.actionLink:hover {
+  color: var(--color-text);
+}
+
+.actionLinkDanger {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-danger);
+  cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pageIndicator {
+  font-size: 12.5px;
+  color: var(--color-text-tertiary);
+}
+
 .note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 12px;
   color: var(--color-text-muted);
+  margin-top: 16px;
+}
+
+.noteDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  flex-shrink: 0;
 }
