@@ -1,5 +1,5 @@
 import { request, setAccessToken } from './http'
-import type { LoginResponse, UserRole } from './types'
+import type { LoginResponse, TeamMember, UserRole } from './types'
 
 export async function login(email: string, password: string) {
   const res = await request<LoginResponse>('/identity/login', {
@@ -21,6 +21,10 @@ export async function inviteMember(tenantId: string, email: string, role: UserRo
     method: 'POST',
     body: { email, role },
   })
+}
+
+export async function listMembers(tenantId: string) {
+  return request<TeamMember[]>(`/identity/tenants/${tenantId}/members`)
 }
 
 export async function acceptInvitation(token: string, name: string, password: string) {

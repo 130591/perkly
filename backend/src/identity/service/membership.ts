@@ -52,6 +52,17 @@ export class MembershipService {
     return { id: invitation.externalId, invitationToken: token }
   }
 
+  /** Read-model for the team screen — see database/sql/team-members.sql. */
+  async listMembers(tenantExternalId: string, callerAccountId: string) {
+    if (tenantExternalId !== callerAccountId)
+      throw new NotFoundException('Tenant not found')
+
+    const account = await this.repository.findOneById(tenantExternalId)
+    if (!account) throw new NotFoundException('Tenant not found')
+
+    return this.repository.findMembers(account.id)
+  }
+
   @Transactional()
   async acceptInvitation(input: {
     token: string

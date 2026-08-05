@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -103,6 +104,15 @@ export class Authentication {
     @Body() body: InviteMemberBody,
   ) {
     return this.membership.inviteMember(tenantId, user.accountId, body)
+  }
+
+  @Get('tenants/:tenantId/members')
+  @Roles('ADMIN')
+  listMembers(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tenantId', ParseUUIDPipe) tenantId: string,
+  ) {
+    return this.membership.listMembers(tenantId, user.accountId)
   }
 
   @Post('invitations/:token/accept')

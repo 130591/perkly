@@ -1,18 +1,20 @@
 import { useState, type FormEvent } from 'react'
+import useSWR from 'swr'
 import { PageHeader } from '../../components/PageHeader'
 import { Button } from '../../components/Button'
 import { StatusBadge } from '../../components/StatusBadge'
 import { useToast } from '../../components/Toast'
 import { useAuth } from '../../auth/AuthContext'
-import { inviteMember } from '../../api/identity'
+import { inviteMember, listMembers } from '../../api/identity'
 import { ApiError } from '../../api/http'
-import { teamFixtures, type TeamMember } from '../../lib/fixtures'
+import type { TeamMember } from '../../api/types'
 import styles from './TeamPage.module.css'
 
 export function TeamPage() {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const [members, setMembers] = useState<TeamMember[]>(teamFixtures)
+  const key = user ? `/identity/tenants/${user.accountId}/members` : null
+  const { data: members, mutate } = useSWR(key, () => listMembers(user!.accountId))
   const [inviteOpen, setInviteOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER')
@@ -23,8 +25,10 @@ export function TeamPage() {
     showToast(`Convite reenviado para ${m.email}`)
   }
 
+  // No backend endpoint to cancel an invite / revoke access yet — this only
+  // updates the local view, a refresh brings the member back.
   function onRemove(m: TeamMember) {
-    setMembers((prev) => prev.filter((x) => x.id !== m.id))
+    mutate((prev) => prev?.filter((x) => x.id !== m.id), { revalidate: false })
     showToast(`${m.status === 'pending' ? 'Convite cancelado' : 'Acesso removido'}: ${m.name}`)
   }
 
@@ -35,10 +39,7 @@ export function TeamPage() {
     setError(null)
     try {
       await inviteMember(user.accountId, email, role)
-      setMembers((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), name: email.split('@')[0], email, role, status: 'pending' },
-      ])
+      await mutate()
       setInviteOpen(false)
       setEmail('')
       setRole('MEMBER')
@@ -52,14 +53,21 @@ export function TeamPage() {
 
   return (
     <>
-      <PageHeader title="Configurações · Equipe" actions={<Button onClick={() => setInviteOpen(true)}>+ Convidar pessoa</Button>} />
+      <PageHeader
+        title="Configurações · Equipe"
+        actions={
+          <Button size="compact" onClick={() => setInviteOpen(true)}>
+            + Convidar pessoa
+          </Button>
+        }
+      />
       <main className={styles.main}>
         <div className={styles.container}>
           <div style={{ fontSize: 13, color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
-            {members.length} pessoas com acesso
+            {members?.length ?? 0} pessoas com acesso
           </div>
           <div className={styles.card}>
-            {members.map((m) => (
+            {members?.map((m) => (
               <div key={m.id} className={styles.row}>
                 <div className={styles.avatar}>{m.name.slice(0, 2).toUpperCase()}</div>
                 <div className={styles.info}>
@@ -74,14 +82,16 @@ export function TeamPage() {
                     variant="inline"
                   />
                 </span>
-                {m.status === 'pending' && (
-                  <Button variant="ghost" type="button" onClick={() => onResend(m)}>
-                    Reenviar
+                <span className={styles.actions}>
+                  {m.status === 'pending' && (
+                    <Button variant="ghost" type="button" onClick={() => onResend(m)}>
+                      Reenviar
+                    </Button>
+                  )}
+                  <Button variant="danger" type="button" onClick={() => onRemove(m)}>
+                    {m.status === 'pending' ? 'Cancelar' : 'Remover'}
                   </Button>
-                )}
-                <Button variant="danger" type="button" onClick={() => onRemove(m)}>
-                  {m.status === 'pending' ? 'Cancelar' : 'Remover'}
-                </Button>
+                </span>
               </div>
             ))}
           </div>
