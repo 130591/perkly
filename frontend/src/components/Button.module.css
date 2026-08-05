@@ -72,3 +72,12 @@
 .button:disabled {
   cursor: not-allowed;
 }
+
+/* Matches PageHeader's .balanceValue (13px/600) — an inline action button
+   next to text shouldn't look like a full-size form CTA. Declared last so it
+   wins over the variant rules' height/padding/font-size. */
+.compact {
+  height: auto;
+  padding: 9px 16px;
+  font-size: 13px;
+}

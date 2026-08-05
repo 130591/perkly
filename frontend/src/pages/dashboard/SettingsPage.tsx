@@ -15,7 +15,14 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Configurações" actions={<Button variant="outline" onClick={onLogout}>Sair</Button>} />
+      <PageHeader
+        title="Configurações"
+        actions={
+          <Button variant="outline" size="compact" onClick={onLogout}>
+            Sair
+          </Button>
+        }
+      />
       <main className={styles.main}>
         <div className={styles.container}>
           <Link to="/dashboard/equipe" className={styles.card}>
