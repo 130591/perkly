@@ -11,6 +11,7 @@ import { CampaignModule } from './campaign/campaign.module'
 import { PayoutModule } from './payout/payout.module'
 import { ClaimModule } from './claim/claim.module'
 import { IdentityModule } from './identity/identity.module'
+import { NotificationModule } from './notification/notification.module'
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { IdentityModule } from './identity/identity.module'
     PayoutModule,
     ClaimModule,
     IdentityModule,
+    NotificationModule,
   ],
   controllers: [],
   providers: [],

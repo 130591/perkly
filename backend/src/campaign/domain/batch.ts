@@ -1,6 +1,4 @@
-export type Channel =
-  | { type: 'email'; address: string }
-  | { type: 'phone'; number: string }
+import { Channel } from '../../shared/domain/channel'
 
 export type Recipient = {
   name: string

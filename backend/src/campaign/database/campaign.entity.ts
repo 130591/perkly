@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import { DefaultEntity } from '../../shared/database/core/base.entity'
-import { Channel } from '../domain/batch'
+import { Channel } from '../../shared/domain/channel'
 
 /**
  * Recipients are stored inline on the batch as jsonb — proto-payouts, not yet

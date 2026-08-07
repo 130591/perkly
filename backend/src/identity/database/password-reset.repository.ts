@@ -16,13 +16,14 @@ export class PasswordResetRepository extends DefaultTypeOrmRepository<PasswordRe
     super(PasswordResetEntity, dataSource.manager)
   }
 
-  async create(input: PasswordResetCommand): Promise<void> {
-    await this.save(
+  async create(input: PasswordResetCommand) {
+    const reset = await this.save(
       new PasswordResetEntity({
         userId: input.userId,
         tokenHash: input.tokenHash,
         expiresAt: input.expiresAt,
       }),
     )
+    return { externalId: reset.externalId }
   }
 }

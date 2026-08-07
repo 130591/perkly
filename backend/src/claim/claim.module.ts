@@ -6,6 +6,7 @@ import { CreateClaimConsumer } from './messaging/create-claim.consumer'
 import { ClaimExpirationWorker } from './messaging/expiration.worker'
 import { ClaimEventPublisher } from './messaging/events'
 import { SqsClaimEventPublisher } from './messaging/event-publisher'
+import { NotificationModule } from '../notification/notification.module'
 
 /**
  * Consome `payout-created` (produzida pelo payout) e gera o link de resgate.
@@ -17,6 +18,7 @@ import { SqsClaimEventPublisher } from './messaging/event-publisher'
  * de novo quebraria isso).
  */
 @Module({
+  imports: [NotificationModule],
   controllers: [ClaimController],
   providers: [
     ClaimService,

@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   ConflictException,
   BadRequestException,
@@ -14,6 +15,8 @@ import {
   UserRole,
 } from '../database'
 import { Token } from '../token'
+import { NOTIFIER, Notifier } from '../../notification/core/notifier'
+import { ConfigService } from '../../shared/config/service'
 
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
 
@@ -23,8 +26,11 @@ export class MembershipService {
     private readonly repository: Repository,
     private readonly invitationRepo: TenantInvitationRepository,
     private readonly userRepo: UserRepository,
+    private readonly config: ConfigService,
+    @Inject(NOTIFIER) private readonly notifier: Notifier,
   ) {}
 
+  @Transactional()
   async inviteMember(
     tenantExternalId: string,
     callerAccountId: string,
@@ -47,8 +53,20 @@ export class MembershipService {
       expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
     })
 
-    // TODO: disparo do e-mail de convite fica para o módulo de notificação
-    // (mesma dívida do createTenant). Até lá, o token cru volta na resposta.
+    await this.notifier.send({
+      reason: 'member-invited',
+      idempotencyKey: invitation.externalId,
+      recipient: { type: 'email', address: input.email },
+      context: {
+        name: input.email,
+        tenantName: account.companyName,
+        inviteLink: `${this.config.get('frontendUrl')}/convite/${token}?email=${encodeURIComponent(input.email)}`,
+      },
+    })
+
+    // Token cru continua na resposta como fallback manual enquanto
+    // SENDGRID_API_KEY não está configurada — remover quando o e-mail
+    // estiver confirmadamente funcionando.
     return { id: invitation.externalId, invitationToken: token }
   }
 

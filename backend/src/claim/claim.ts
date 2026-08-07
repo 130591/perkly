@@ -1,4 +1,4 @@
-import { Channel } from '../campaign/domain/batch'
+import { Channel } from '../shared/domain/channel'
 
 export type ClaimStatus =
   | 'pending' // link ativo, aguardando o destinatário confirmar

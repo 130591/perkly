@@ -6,7 +6,8 @@ import { DataSource } from 'typeorm'
 import { DefaultTypeOrmRepository } from '../../shared/database/core/typeorm'
 import { CampaignEntity, BatchEntity } from './campaign.entity'
 import { Campaign, CampaignStatus, TransferType } from '../domain/campaign'
-import { Batch, Channel } from '../domain/batch'
+import { Batch } from '../domain/batch'
+import { Channel } from '../../shared/domain/channel'
 
 /** Loaded once at module init; see database/sql/campaign-stats.sql. */
 const CAMPAIGN_STATS_SQL = readFileSync(

@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   BadRequestException,
   NotFoundException,
@@ -12,6 +13,8 @@ import {
   RefreshTokenRepository,
 } from '../database'
 import { Token } from '../token'
+import { NOTIFIER, Notifier } from '../../notification/core/notifier'
+import { ConfigService } from '../../shared/config/service'
 
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000
 
@@ -21,26 +24,35 @@ export class PasswordRecoveryService {
     private readonly userRepo: UserRepository,
     private readonly passwordResetRepo: PasswordResetRepository,
     private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly config: ConfigService,
+    @Inject(NOTIFIER) private readonly notifier: Notifier,
   ) {}
 
+  @Transactional()
   async requestPasswordReset(email: string) {
     const user = await this.userRepo.findOne({ where: { email } })
 
     // Sempre a mesma resposta, exista ou não o e-mail — evita enumeração de
     // usuários (task 08). Só gera/persiste o token se o usuário existir; o
-    // token nunca volta na resposta (diferente de createTenant/inviteMember,
-    // que são acionados por quem já sabe que a conta existe — aqui é
-    // autoatendimento não-autenticado, devolver o token de volta reabriria
-    // exatamente a enumeração que a resposta genérica existe pra evitar).
+    // token nunca volta na resposta (diferente de createTenant/inviteMember)
+    // — só vai pro e-mail do próprio dono da conta, nunca pro chamador.
     if (user) {
-      const { tokenHash } = Token.generate()
-      await this.passwordResetRepo.create({
+      const { token, tokenHash } = Token.generate()
+      const reset = await this.passwordResetRepo.create({
         userId: user.id,
         tokenHash,
         expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
       })
-      // TODO: disparo do e-mail de recuperação fica para o módulo de
-      // notificação (mesma dívida de createTenant/inviteMember).
+
+      await this.notifier.send({
+        reason: 'password-reset-requested',
+        idempotencyKey: reset.externalId,
+        recipient: { type: 'email', address: email },
+        context: {
+          name: user.name ?? user.email,
+          resetLink: `${this.config.get('frontendUrl')}/redefinir-senha/${token}`,
+        },
+      })
     }
 
     return {

@@ -1,6 +1,6 @@
 import { Column, Entity } from 'typeorm'
 import { DefaultEntity } from '../../shared/database/core/base.entity'
-import { Channel } from '../../campaign/domain/batch'
+import { Channel } from '../../shared/domain/channel'
 
 @Entity('payout')
 export class PayoutEntity extends DefaultEntity<PayoutEntity> {

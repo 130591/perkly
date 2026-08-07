@@ -12,7 +12,8 @@ import {
 import { Type } from 'class-transformer'
 
 import { CampaignDraft, TransferType } from './domain/campaign'
-import { BatchDraft, Recipient, Channel } from './domain/batch'
+import { BatchDraft, Recipient } from './domain/batch'
+import { Channel } from '../shared/domain/channel'
 
 export class ChannelDto {
   @IsIn(['email', 'phone'])

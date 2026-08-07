@@ -5,6 +5,7 @@ import { sqsConfigSchema } from './sqs.config'
 import { webhookConfigSchema } from './webhook.config'
 import { backofficeConfigSchema } from './backoffice.config'
 import { jwtConfigSchema } from './jwt.config'
+import { twilioConfigSchema, sendgridConfigSchema } from './notification.config'
 import { z } from 'zod'
 
 export const environmentSchema = z.enum(['test', 'development', 'production'])
@@ -19,11 +20,17 @@ export const sharedConfigSchema = z
     env: environmentSchema,
     port: z.coerce.number().int().positive().default(3000),
     identity: cnpjSchema,
+    frontendUrl: z.string().url().default('http://localhost:5173'),
     companyName: z.literal('Perkly').default('Perkly'),
     database: databaseConfigSchema,
     // Opcional enquanto a rail é o mock Psp: sem creds no ambiente, o bloco some
     // (não quebra o boot); com qualquer cred setada, é validado por inteiro.
     celcoin: celcoinConfigSchema.optional(),
+    // Mesmo padrão do celcoin: sem nenhuma credencial, o bloco some. Os dois
+    // podem existir independentemente (RFC 0006, Decisão 6/Provider) — hoje só
+    // twilio está setado no .env, sendgrid ainda não.
+    twilio: twilioConfigSchema.optional(),
+    sendgrid: sendgridConfigSchema.optional(),
     // Sempre presentes: o factory sempre passa o bloco (com props undefined), e
     // cada campo aplica seu default de dev (ElasticMQ local / segredo placeholder).
     sqs: sqsConfigSchema,
@@ -72,11 +79,37 @@ const celcoinEnv = () =>
       }
     : undefined
 
+const twilioEnv = () =>
+  process.env.TWILIO_ACCOUNT_SID ||
+  process.env.TWILIO_AUTH_TOKEN ||
+  process.env.TWILIO_WHATSAPP_FROM
+    ? {
+        accountSid: process.env.TWILIO_ACCOUNT_SID,
+        authToken: process.env.TWILIO_AUTH_TOKEN,
+        whatsappFrom: process.env.TWILIO_WHATSAPP_FROM,
+        templates: {
+          claimLinkReady: process.env.TWILIO_TEMPLATE_CLAIM_LINK_READY,
+          tenantActivation: process.env.TWILIO_TEMPLATE_TENANT_ACTIVATION,
+          memberInvited: process.env.TWILIO_TEMPLATE_MEMBER_INVITED,
+          passwordResetRequested: process.env.TWILIO_TEMPLATE_PASSWORD_RESET,
+        },
+      }
+    : undefined
+
+const sendgridEnv = () =>
+  process.env.SENDGRID_API_KEY || process.env.SENDGRID_FROM_EMAIL
+    ? {
+        apiKey: process.env.SENDGRID_API_KEY,
+        fromEmail: process.env.SENDGRID_FROM_EMAIL,
+      }
+    : undefined
+
 export const sharedConfigFactory = (): SharedConfig => {
   const result = sharedConfigSchema.safeParse({
     env: process.env.NODE_ENV,
     port: process.env.PORT,
     identity: process.env.COMPANY_IDENTITY,
+    frontendUrl: process.env.FRONTEND_URL,
     database: {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
@@ -86,6 +119,8 @@ export const sharedConfigFactory = (): SharedConfig => {
       synchronize: process.env.DB_SYNCHRONIZE,
     },
     celcoin: celcoinEnv(),
+    twilio: twilioEnv(),
+    sendgrid: sendgridEnv(),
     sqs: {
       endpoint: process.env.SQS_ENDPOINT,
       region: process.env.SQS_REGION,

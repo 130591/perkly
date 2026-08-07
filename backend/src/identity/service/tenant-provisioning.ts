@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   ConflictException,
   BadRequestException,
@@ -13,6 +14,8 @@ import {
   UserActivationRepository,
 } from '../database'
 import { Token } from '../token'
+import { NOTIFIER, Notifier } from '../../notification/core/notifier'
+import { ConfigService } from '../../shared/config/service'
 
 type NewTenant = {
   email: string
@@ -30,6 +33,8 @@ export class TenantProvisioningService {
     private readonly repository: Repository,
     private readonly userRepo: UserRepository,
     private readonly activationRepo: UserActivationRepository,
+    private readonly config: ConfigService,
+    @Inject(NOTIFIER) private readonly notifier: Notifier,
   ) {}
 
   @Transactional()
@@ -52,15 +57,25 @@ export class TenantProvisioningService {
     })
 
     const { token, tokenHash } = Token.generate()
-    await this.activationRepo.create({
+    const activation = await this.activationRepo.create({
       userId: userCreated.id,
       tokenHash,
       expiresAt: new Date(Date.now() + ACTIVATION_TTL_MS),
     })
 
-    // TODO: disparo do e-mail de boas-vindas/ativação fica para o módulo de
-    // notificação (fora do escopo desta task). Até lá, o token cru volta na
-    // resposta pra dar pra ativar manualmente.
+    await this.notifier.send({
+      reason: 'tenant-activation',
+      idempotencyKey: activation.externalId,
+      recipient: { type: 'email', address: input.email },
+      context: {
+        name: input.companyName,
+        activationLink: `${this.config.get('frontendUrl')}/ativar/${token}`,
+      },
+    })
+
+    // Token cru continua na resposta como fallback manual enquanto
+    // SENDGRID_API_KEY não está configurada (envio real ainda não sai) —
+    // remover quando o e-mail estiver confirmadamente funcionando.
     return { id: accountCreated.externalId, activationToken: token }
   }
 

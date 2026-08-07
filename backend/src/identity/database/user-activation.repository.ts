@@ -16,13 +16,14 @@ export class UserActivationRepository extends DefaultTypeOrmRepository<UserActiv
     super(UserActivationEntity, dataSource.manager)
   }
 
-  async create(input: UserActivationCommand): Promise<void> {
-    await this.save(
+  async create(input: UserActivationCommand) {
+    const activation = await this.save(
       new UserActivationEntity({
         userId: input.userId,
         tokenHash: input.tokenHash,
         expiresAt: input.expiresAt,
       }),
     )
+    return { externalId: activation.externalId }
   }
 }

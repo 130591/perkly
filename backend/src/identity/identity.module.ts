@@ -20,10 +20,12 @@ import {
   TenantInvitationRepository,
   PasswordResetRepository,
 } from './database'
+import { NotificationModule } from '../notification/notification.module'
 
 @Module({
   imports: [
     PassportModule,
+    NotificationModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {

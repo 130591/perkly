@@ -10,6 +10,10 @@ import {
   CLAIM_EXPIRED_QUEUE,
 } from '../../claim/messaging/queues'
 import { CASH_IN_QUEUE, PAYOUT_CONFIRMED_QUEUE } from '../../settle/queues'
+import {
+  NOTIFICATION_EMAIL_QUEUE,
+  NOTIFICATION_WHATSAPP_QUEUE,
+} from '../../notification/messaging/queues'
 
 const QUEUES = [
   PAYOUT_BATCH_QUEUE,
@@ -18,6 +22,8 @@ const QUEUES = [
   CLAIM_EXPIRED_QUEUE,
   PAYOUT_CONFIRMED_QUEUE,
   CASH_IN_QUEUE,
+  NOTIFICATION_EMAIL_QUEUE,
+  NOTIFICATION_WHATSAPP_QUEUE,
 ]
 
 /**
